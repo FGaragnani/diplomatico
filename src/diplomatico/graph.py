@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from board import Board
+from diplomatico.board import Board
 import unittest
 
 class Node:
