@@ -11,8 +11,6 @@ class Board:
         """
         self.r: int = r
         self.c: int = c
-        self.n: int = 0
-        self.curr_n: Tuple[int, int] = (-1, -1)
         self.board: List[List[int]] = [[0 for _ in range(c)] for _ in range(r)]
 
     def size(self) -> int:
@@ -59,45 +57,23 @@ class Board:
                     return (i, j)
         return None
     
-    def available_moves(self) -> List[Tuple[int, int]]:
+    def available_moves(self, i: int, j: int) -> List[Tuple[int, int]]:
         """
         Get a list of available moves.
 
         :return: A list of tuples representing the coordinates of possible moves
         """
         moves: List[Tuple[int, int]] = []
-        if self.n == 0:
-            for i in range(self.r):
-                for j in range(self.c):
-                    if self.board[i][j] == 0:
-                        moves.append((i, j))
-        else:
-            pos = self.curr_n
-            if pos == (-1, -1):
-                raise ValueError("Value not found in the board")
-            i, j = pos
-            directions = [
-                (2, 2), (-2, 2), (2, -2), (-2, -2),
-                (0, 3), (0, -3), (3, 0), (-3, 0)
-            ]
-            for dr, dc in directions:
-                new_row, new_col = i + dr, j + dc
-                if self.is_valid_cell(new_row, new_col) and self.board[new_row][new_col] == 0:
-                    moves.append((new_row, new_col))
+        directions = [
+            (2, 2), (-2, 2), (2, -2), (-2, -2),
+            (0, 3), (0, -3), (3, 0), (-3, 0)
+        ]
+        for dr, dc in directions:
+            new_row, new_col = i + dr, j + dc
+            if self.is_valid_cell(new_row, new_col) and self.board[new_row][new_col] == 0:
+                moves.append((new_row, new_col))
         return moves
     
-    def move(self, r: int, c: int) -> None:
-        """
-        Make a move on the board at the specified coordinates.
-
-        :param r: The row index
-        :param c: The column index
-        """
-        if not (r, c) in self.available_moves():
-            raise ValueError("Invalid move")
-        self.n += 1
-        self.board[r][c] = self.n
-        self.curr_n = (r, c)
 
 import unittest
 
@@ -143,42 +119,6 @@ class TestBoard(unittest.TestCase):
         self.assertFalse(board.is_valid_cell(-1, 0))
         self.assertFalse(board.is_valid_cell(0, 2))
         self.assertFalse(board.is_valid_cell(2, 0))
-
-    def test_available_moves_initial(self):
-        board = Board(2, 2)
-        moves = board.available_moves()
-        self.assertEqual(sorted(moves), [(0, 0), (0, 1), (1, 0), (1, 1)])
-
-    def test_move_and_available_moves(self):
-        board = Board(3, 3)
-        board.move(0, 0)
-        self.assertEqual(board.board[0][0], 1)
-        self.assertEqual(board.n, 1)
-        self.assertEqual(board.curr_n, (0, 0))
-        moves = board.available_moves()
-        expected_moves = []
-        directions = [
-            (2, 2), (-2, 2), (2, -2), (-2, -2),
-            (0, 3), (0, -3), (3, 0), (-3, 0)
-        ]
-        for dr, dc in directions:
-            new_row, new_col = 0 + dr, 0 + dc
-            if 0 <= new_row < 3 and 0 <= new_col < 3:
-                if board.board[new_row][new_col] == 0:
-                    expected_moves.append((new_row, new_col))
-        self.assertEqual(sorted(moves), sorted(expected_moves))
-
-    def test_move_invalid(self):
-        board = Board(2, 2)
-        with self.assertRaises(ValueError):
-            board.move(2, 2)
-
-    def test_move_valid(self):
-        board = Board(2, 2)
-        board.move(0, 0)
-        self.assertEqual(board.board[0][0], 1)
-        self.assertEqual(board.n, 1)
-        self.assertEqual(board.curr_n, (0, 0))
 
 if __name__ == "__main__":
     unittest.main()
