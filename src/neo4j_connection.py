@@ -8,13 +8,13 @@ def create_graph_query(r: int, c: int) -> str:
     query = ""
     for i in range(r):
         for j in range(c):
-            query += f"CREATE (n:Node {{row: {i}, col: {j}}})\n"
+            query += f"CREATE (n_{i}_{j}:Node {{row: {i}, col: {j}}})\n"
     board_graph: BoardGraph = BoardGraph(Board(r, c))
     adjacency_matrix = board_graph.adjacency_matrix
     for i in range(len(adjacency_matrix)):
         for j in range(len(adjacency_matrix[i])):
             if adjacency_matrix[i][j] == 1:
-                query += f"CREATE (n1:Node {{row: {i // c}, col: {i % c}}})-[:MOVE]->(n2:Node {{row: {j // c}, col: {j % c}}})\n"
+                query += f"CREATE (n_{i // c}_{i % c})-[:MOVE]->(n_{j // c}_{j % c})\n"
     return query
 
 class Neo4JConnection:
