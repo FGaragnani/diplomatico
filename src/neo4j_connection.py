@@ -1,7 +1,7 @@
 from py2neo import Graph
 from src.config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 from enum import Enum
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 from src.diplomatico.graph import BoardGraph
 from src.diplomatico.board import Board
@@ -92,7 +92,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                     query += f"CREATE (n_{i // c}_{i % c})-[:MOVE]->(n_{j // c}_{j % c})\n"
         self.run_query(query)
 
-    def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, just_one: bool = True) -> List:
+    def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, just_one: bool = True, starting_node: Optional[Tuple[int, int]] = None) -> List:
         """
             Calculate the Hamiltonian paths' number for the current board.
 
@@ -103,11 +103,19 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
         parameters = {}
         if query_type == QueryType.RAW:
             parameters = {"pathLength": self.board_graph.board.size() - 1}
-            query = f'''
+            if starting_node is not None:
+                row, col = starting_node
+                if not self.board_graph.board.is_valid_cell(row, col):
+                    raise ValueError(f"Invalid starting node: ({row}, {col})")
+                query = f"""
+                            MATCH (start:Node {{row: {row}, col: {col}}})
+                        """
+            query += f'''
                         MATCH p = (start:Node)-[:MOVE*{parameters["pathLength"]}]->(end:Node)
                         WHERE ALL(n IN nodes(p) WHERE single(m IN nodes(p) WHERE m = n))
                         RETURN p
                     '''
+            
         elif query_type == QueryType.CONSTRUCTIVE:
             path_length = self.board_graph.board.size() - 1
 
@@ -117,20 +125,29 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                 query = "MATCH (n:Node) RETURN [n] AS p"
                 parameters = {}
             else:
-                # Create node names n0 .. n{L}
-                node_vars = [f"n{i}" for i in range(path_length + 1)]
-                # Build chained pattern
+                # build node variable names including n0 .. n{L}
+                node_vars = [f"n{i}" for i in range(0, path_length + 1)]
+
+                # if a starting_node is provided, anchor n0 to that cell
+                prefix = ""
+                if starting_node is not None:
+                    row, col = starting_node
+                    if not self.board_graph.board.is_valid_cell(row, col):
+                        raise ValueError(f"Invalid starting node: ({row}, {col})")
+                    prefix = f"MATCH (n0:Node {{row: {row}, col: {col}}})\n"
+
+                # Build chained pattern starting from n0
                 pattern = "MATCH p = (" + node_vars[0] + ":Node)"
                 for i in range(1, len(node_vars)):
                     pattern += f"-[:MOVE]->({node_vars[i]}:Node)"
 
+                # uniqueness via id(...) NOT IN [...] where previous ids include n0
                 where_clauses = []
                 for i in range(1, len(node_vars)):
-                    # build a NOT IN list of ids of previous nodes: id(n0), id(n1), ...
                     prev_ids = ", ".join([f"id({node_vars[j]})" for j in range(0, i)])
                     where_clauses.append(f"NOT id({node_vars[i]}) IN [{prev_ids}]")
-                query = pattern
 
+                query = prefix + pattern
                 if where_clauses:
                     query += "\nWHERE " + " AND ".join(where_clauses)
                 query += "\nRETURN p\n"
@@ -139,9 +156,14 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
         elif query_type == QueryType.APOC:
             if not self.is_apoc_installed():
                 raise RuntimeError("APOC is not installed.")
-            # Use expandConfig with minLevel and maxLevel and NODE_PATH uniqueness
-            # to have apoc enforce path-level uniqueness while expanding.
-            query = '''
+            if starting_node is not None:
+                row, col = starting_node
+                if not self.board_graph.board.is_valid_cell(row, col):
+                    raise ValueError(f"Invalid starting node: ({row}, {col})")
+                query = f"""
+                            MATCH (start:Node {{row: {row}, col: {col}}})
+                        """
+            query += '''
                         MATCH (start:Node)
                         CALL apoc.path.expandConfig(start, {
                             relationshipFilter: 'MOVE>',
