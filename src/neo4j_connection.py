@@ -8,7 +8,15 @@ from src.diplomatico.board import Board
 
 class QueryType(Enum):
     RAW = "RAW"
+    CONSTRUCTIVE = "CONSTRUCTIVE"
     APOC = "APOC"
+
+    @staticmethod
+    def from_str(val: str):
+        for query_type in QueryType:
+            if query_type.name == val.upper():
+                return query_type
+        raise ValueError(f"Unknown QueryType: {val}")
 
 class Neo4JConnection:
     def __init__(self):
@@ -89,28 +97,59 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
             Calculate the Hamiltonian paths' number for the current board.
 
             :param query_type: The type of algorithm to run.
-            :return: The Hamiltonian paths' number.
+            :return: The Hamiltonian paths.
         """
+        query = ""
         parameters = {}
         if query_type == QueryType.RAW:
             parameters = {"pathLength": self.board_graph.board.size() - 1}
-            query = f""" 
-                        MATCH p = (n:Node)-[:MOVE*{parameters["pathLength"]}]->(m:Node)
-                            WHERE ALL(x IN nodes(p) WHERE single(y IN nodes(p) WHERE y = x))
+            query = f'''
+                        MATCH p = (start:Node)-[:MOVE*{parameters["pathLength"]}]->(end:Node)
+                        WHERE ALL(n IN nodes(p) WHERE single(m IN nodes(p) WHERE m = n))
                         RETURN p
-                    """
+                    '''
+        elif query_type == QueryType.CONSTRUCTIVE:
+            path_length = self.board_graph.board.size() - 1
+
+            if path_length < 0:
+                raise ValueError("Board size must be >= 1")
+            if path_length == 0:
+                query = "MATCH (n:Node) RETURN [n] AS p"
+                parameters = {}
+            else:
+                # Create node names n0 .. n{L}
+                node_vars = [f"n{i}" for i in range(path_length + 1)]
+                # Build chained pattern
+                pattern = "MATCH p = (" + node_vars[0] + ":Node)"
+                for i in range(1, len(node_vars)):
+                    pattern += f"-[:MOVE]->({node_vars[i]}:Node)"
+
+                where_clauses = []
+                for i in range(1, len(node_vars)):
+                    # build a NOT IN list of ids of previous nodes: id(n0), id(n1), ...
+                    prev_ids = ", ".join([f"id({node_vars[j]})" for j in range(0, i)])
+                    where_clauses.append(f"NOT id({node_vars[i]}) IN [{prev_ids}]")
+                query = pattern
+
+                if where_clauses:
+                    query += "\nWHERE " + " AND ".join(where_clauses)
+                query += "\nRETURN p\n"
+                parameters = {}
+
         elif query_type == QueryType.APOC:
             if not self.is_apoc_installed():
                 raise RuntimeError("APOC is not installed.")
+            # Use expandConfig with minLevel and maxLevel and NODE_PATH uniqueness
+            # to have apoc enforce path-level uniqueness while expanding.
             query = '''
                         MATCH (start:Node)
                         CALL apoc.path.expandConfig(start, {
-                            relationshipFilter: "MOVE",
-                            uniqueness: "NODE_GLOBAL",
+                            relationshipFilter: 'MOVE>',
+                            labelFilter: 'Node',
+                            uniqueness: 'NODE_PATH',
+                            minLevel: $pathLength,
                             maxLevel: $pathLength
                         }) YIELD path
-                        WHERE length(path) = $pathLength
-                            AND ALL(x IN nodes(path) WHERE single(y IN nodes(path) WHERE y = x))
                         RETURN path
                     '''
             parameters = {"pathLength": self.board_graph.board.size() - 1}
@@ -128,13 +167,46 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
         """
         paths = []
         for record in result:
-            path = record['p']
-            # path.nodes is a list of Node objects
+            # support both 'p' (chained MATCH) and 'path' (APOC) return keys
+            path_obj = None
+            if 'p' in record:
+                path_obj = record['p']
+            elif 'path' in record:
+                path_obj = record['path']
+            elif len(record) == 1:
+                # fallback: take the single value
+                path_obj = list(record.values())[0]
+            else:
+                continue
+
+            node_list = []
+            # py2neo Path has .nodes; a direct list may be returned as well
+            if hasattr(path_obj, 'nodes'):
+                node_list = path_obj.nodes
+            elif isinstance(path_obj, list) or isinstance(path_obj, tuple):
+                node_list = path_obj
+            else:
+                # Unknown structure — try to iterate
+                try:
+                    node_list = list(path_obj)
+                except Exception:
+                    continue
+
             node_coords = []
-            for node in path.nodes:
-                # Each node has 'row' and 'col' properties
-                row = node['row']
-                col = node['col']
+            for node in node_list:
+                try:
+                    # py2neo Node supports dict-like access
+                    row = node['row']
+                    col = node['col']
+                except Exception:
+                    # if node is a plain dict
+                    if isinstance(node, dict):
+                        row = node.get('row')
+                        col = node.get('col')
+                    else:
+                        # can't extract coordinates
+                        row = None
+                        col = None
                 node_coords.append((row, col))
             paths.append(node_coords)
         return paths
