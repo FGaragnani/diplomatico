@@ -74,6 +74,23 @@ class Board:
                 moves.append((new_row, new_col))
         return moves
     
+    @classmethod
+    def print_board(cls, path: List[Tuple[int, int]]) -> None:
+        """
+        Print the board with the given path.
+
+        :param path: A list of (row, col) tuples representing the path
+        """
+        max_row = max(pos[0] for pos in path) + 1
+        max_col = max(pos[1] for pos in path) + 1
+        board = [[0 for _ in range(max_col)] for _ in range(max_row)]
+        
+        for step, (r, c) in enumerate(path, start=1):
+            board[r][c] = step
+        
+        for row in board:
+            print("|" + " ".join(f"{cell:2}|" for cell in row))
+            print("-" * (max_col * 4))
 
 import unittest
 
