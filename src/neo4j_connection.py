@@ -92,24 +92,36 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                     query += f"CREATE (n_{i // c}_{i % c})-[:MOVE]->(n_{j // c}_{j % c})\n"
         self.run_query(query)
 
-    def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, just_one: bool = True, starting_node: Optional[Tuple[int, int]] = None) -> List:
+    def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, n: Optional[int] = 1, starting_node: Optional[Tuple[int, int]] = None, ending_node: Optional[Tuple[int, int]] = None) -> List:
         """
             Calculate the Hamiltonian paths' number for the current board.
 
             :param query_type: The type of algorithm to run.
+            :param n: The number of paths to return.
+            :param starting_node: Optional starting node as (row, col).
+            :param ending_node: Optional ending node as (row, col).
             :return: The Hamiltonian paths.
         """
         query = ""
         parameters = {}
         if query_type == QueryType.RAW:
             parameters = {"pathLength": self.board_graph.board.size() - 1}
+
             if starting_node is not None:
                 row, col = starting_node
                 if not self.board_graph.board.is_valid_cell(row, col):
                     raise ValueError(f"Invalid starting node: ({row}, {col})")
-                query = f"""
+                query += f"""
                             MATCH (start:Node {{row: {row}, col: {col}}})
                         """
+            if ending_node is not None:
+                row, col = ending_node
+                if not self.board_graph.board.is_valid_cell(row, col):
+                    raise ValueError(f"Invalid ending node: ({row}, {col})")
+                query += f"""
+                                MATCH (end:Node {{row: {row}, col: {col}}})
+                        """
+                
             query += f'''
                         MATCH p = (start:Node)-[:MOVE*{parameters["pathLength"]}]->(end:Node)
                         WHERE ALL(n IN nodes(p) WHERE single(m IN nodes(p) WHERE m = n))
@@ -134,7 +146,12 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                     row, col = starting_node
                     if not self.board_graph.board.is_valid_cell(row, col):
                         raise ValueError(f"Invalid starting node: ({row}, {col})")
-                    prefix = f"MATCH (n0:Node {{row: {row}, col: {col}}})\n"
+                    prefix += f"MATCH (n0:Node {{row: {row}, col: {col}}})\n"
+                if ending_node is not None:
+                    row, col = ending_node
+                    if not self.board_graph.board.is_valid_cell(row, col):
+                        raise ValueError(f"Invalid ending node: ({row}, {col})")
+                    prefix += f"MATCH (n{path_length}:Node {{row: {row}, col: {col}}})\n"
 
                 # Build chained pattern starting from n0
                 pattern = "MATCH p = (" + node_vars[0] + ":Node)"
@@ -147,6 +164,12 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                     prev_ids = ", ".join([f"id({node_vars[j]})" for j in range(0, i)])
                     where_clauses.append(f"NOT id({node_vars[i]}) IN [{prev_ids}]")
 
+                # if an ending_node is anchored to nL, ensure no earlier node equals it
+                if ending_node is not None:
+                    last_var = node_vars[-1]
+                    for i in range(0, len(node_vars) - 1):
+                        where_clauses.append(f"id({node_vars[i]}) <> id({last_var})")
+
                 query = prefix + pattern
                 if where_clauses:
                     query += "\nWHERE " + " AND ".join(where_clauses)
@@ -156,27 +179,46 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
         elif query_type == QueryType.APOC:
             if not self.is_apoc_installed():
                 raise RuntimeError("APOC is not installed.")
+            # Prepare MATCH bindings for start and optional end
+            prefix = ""
             if starting_node is not None:
                 row, col = starting_node
                 if not self.board_graph.board.is_valid_cell(row, col):
                     raise ValueError(f"Invalid starting node: ({row}, {col})")
-                query = f"""
-                            MATCH (start:Node {{row: {row}, col: {col}}})
-                        """
-            query += '''
-                        MATCH (start:Node)
-                        CALL apoc.path.expandConfig(start, {
-                            relationshipFilter: 'MOVE>',
-                            labelFilter: 'Node',
-                            uniqueness: 'NODE_PATH',
-                            minLevel: $pathLength,
-                            maxLevel: $pathLength
-                        }) YIELD path
+                prefix += f"MATCH (start:Node {{row: {row}, col: {col}}})\n"
+            else:
+                prefix += "MATCH (start:Node)\n"
+
+            if ending_node is not None:
+                row, col = ending_node
+                if not self.board_graph.board.is_valid_cell(row, col):
+                    raise ValueError(f"Invalid ending node: ({row}, {col})")
+                prefix += f"MATCH (end:Node {{row: {row}, col: {col}}})\n"
+
+            config_items = [
+                "relationshipFilter: 'MOVE>'",
+                "labelFilter: 'Node'",
+                "uniqueness: 'NODE_PATH'",
+                "minLevel: $pathLength",
+                "maxLevel: $pathLength",
+                "bfs: false"
+            ]
+            if ending_node is not None:
+                config_items.append("endNodes: [end]")
+            if n is not None:
+                config_items.append(f"limit: {n}")
+
+            config_str = ",\n".join(config_items)
+
+            query = prefix + f"""
+                        CALL apoc.path.expandConfig(start, {{
+                            {config_str}
+                        }}) YIELD path
                         RETURN path
-                    '''
+                    """
             parameters = {"pathLength": self.board_graph.board.size() - 1}
 
-        query += "LIMIT 1" if just_one else ""
+        query += f"LIMIT {n}" if n else ""
         result = self.run_query(query=query, parameters=parameters)
         return self.parse_path(result)
 
