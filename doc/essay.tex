@@ -4,6 +4,7 @@
 % Packages
 % ----------------------------
 \usepackage[utf8]{inputenc}
+\usepackage{xfrac}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{graphicx}
 \usepackage[bookmarks=true,hidelinks]{hyperref}
@@ -289,7 +290,7 @@ $$
 
 Given a Board Graph $\mathfrak{G}_{n \times m}$, with $n, m \ge 5$:
 $$
-    4^{\lfloor{\frac{n}{5}}\rfloor \lfloor{\frac{m}{5}}\rfloor} \le \mathbf{N}(\mathfrak{G}_{n \times m}) < 7^{nm - 1}
+    2^{(n - 4)(m - 4)/25} \le \mathbf{N}(\mathfrak{G}_{n \times m}) < 7^{nm - 1}
 $$
 \end{proposition}
 \begin{proof}
@@ -345,24 +346,24 @@ Summarize contributions, highlight key results, and suggest improvements or next
 Here is the detailed proof of the lower bound referenced in the main text, specifically for Proposition \ref{prop:bounds_number_of_solutions}.
 First, some handful lemmas are presented.
 
-\begin{lemma} \label{lem:four_boards}
-    For any Board Graph $\mathfrak{G}_{n \times m}$ with $9 \ge n, m \ge 5$, there exist at least $4$ distinct Winning Path $\mathfrak{h}$ such that:
+\begin{lemma} \label{lem:two_boards_horizontal}
+    For any Board Graph $\mathfrak{G}_{n \times m}$ with $9 \ge n, m \ge 5$, there exist at least $2$ distinct Winning Path $\mathfrak{h}$ such that:
     $$
-        \mathfrak{h}_1 = v_{n-2,\,1} \land \mathfrak{h}_{nm} = v_{n-2,\,m-2} 
+        \mathfrak{h}_1 = v_{3,\,1} \land \mathfrak{h}_{nm} = v_{3,\,m-2} 
     $$
 \end{lemma}
 
-The Lemma \ref{lem:four_boards} can be proved, to the best of my knowledge, only by enumerating all the possible couples $(n,\,m)$ - with, without loss of generality, $n \ge m$, otherwise the indeces of the nodes could be easily swapped - 
-and by explicitly finding the $4$ distinct Winning Paths for each of them.
-What the Lemma states is that there is a guarantee of $4$ different solutions which 'start' from the border node $v_{n-2,\,1}$ and that end with the node displaced by $2$ both horizontally and vertically from the outer edges.
+The Lemma \ref{lem:two_boards_horizontal} can be proved, to the best of my knowledge, only by enumerating all the possible couples $(n,\,m)$ - with, without loss of generality, $n \ge m$, otherwise the indeces of the nodes could be easily swapped -
+and by explicitly finding the $2$ distinct Winning Paths for each of them.
+What the Lemma states is that there is a guarantee of $2$ different solutions which 'start' from the border node $v_{n-2,\,1}$ and that end with the node displaced by $2$ both horizontally and vertically from the outer edges.
 This constraint guarantees the possibility to create a tilization of the board for every $n, m \ge 5$ - hence, guaranteeing a lower bound.
 
 \begin{lemma} \label{lem:tiling}
-    Given the Board Graph $\mathfrak{G}_{n \times (m + k)}$ with $9 \ge n, m, k \ge 5$, then $\mathfrak{G}_{(n + k) \times m}$ is solvable.
+    Given the Board Graph $\mathfrak{G}_{(n+k) \times m}$ with $9 \ge n, m, k \ge 5$, then $\mathfrak{G}_{(n + k) \times m}$ is solvable.
 \end{lemma}
 \begin{proof}
     Consider the two Board Graphs $\mathfrak{G}_{n \times m}$ and $\mathfrak{G}_{k \times m}$.
-    By Lemma \ref{lem:four_boards}, both of them are solvable - since $9 \ge n, m, k \ge 5$.
+    By Lemma \ref{lem:two_boards_horizontal}, both of them are solvable - since $9 \ge n, m, k \ge 5$.
     Let $\mathfrak{h}^1$ be one of the Winning Paths in $\mathfrak{G}_{n \times m}$ guaranteed to exists;
         and let $\mathfrak{h}^2$ be one of the Winning Paths in $\mathfrak{G}_{n \times k}$ guaranteed to exists.
     Defining $\hat{\mathfrak{h}}^2$ in the following way:
@@ -376,21 +377,211 @@ This constraint guarantees the possibility to create a tilization of the board f
     $$
     First of all, the two paths $\mathfrak{h}^1$ and $\hat{\mathfrak{h}}^2$ are disjoint, since they refer to different nodes of the graph; moreover, they completely 'touch' each node of the partitions, being Winning Paths.
     The only thing left to prove is that the last node of $\mathfrak{h}^1$ is connected to the first node of $\hat{\mathfrak{h}}^2$.
-    By Lemma \ref{lem:four_boards}, the last node of $\mathfrak{h}^1$ is $v_{n-2,\,m-2}$; while the first node of $\hat{\mathfrak{h}}^2$ is $v_{n-2,\,m+1}$.
+    By Lemma \ref{lem:two_boards_horizontal}, the last node of $\mathfrak{h}^1$ is $v_{3,\,m-2}$; while the first node of $\hat{\mathfrak{h}}^2$ is $v_{3,\,m+1}$.
     It can be easily verified that:
     $$
-        (|m+1 - m-2| = 3 \land n-2 = n-2)
+        (|m+1 - m-2| = 3 \land 3 = 3)
     $$
-    hence, the edge $\{v_{n-2,\,m-2},\,v_{n-2,\,m+1}\}$ exists, giving a complete solution for the Board Graph $\mathfrak{G}_{(n + k) \times m}$.
+    hence, the edge $\{v_{3,\,m-2},\,v_{3,\,m+1}\}$ exists, giving a complete solution for the Board Graph $\mathfrak{G}_{(n + k) \times m}$.
 \end{proof}
 
+The result exposed in the Lemma \ref{lem:tiling} is graphically represented in Figure \ref{fig:tiling_example}.
 It's to note that the above Lemma \ref{lem:tiling} can be easily adapted to increasing values of columns for Board Graphs.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
+    \draw[step=1cm,gray,very thin] (0,0) grid (10,5);
+
+    \node at (0.5,4.5) {17};
+    \node at (1.5,4.5) {9};
+    \node at (2.5,4.5) {2};
+    \node at (3.5,4.5) {16};
+    \node at (4.5,4.5) {8};
+
+    \node at (0.5,3.5) {4};
+    \node at (1.5,3.5) {14};
+    \node at (2.5,3.5) {19};
+    \node at (3.5,3.5) {5};
+    \node at (4.5,3.5) {13};
+
+    \node at (0.5,2.5) {1};
+    \node at (1.5,2.5) {22};
+    \node[fill=blue!10, draw=blue] at (2.5,2.5) {25};
+    \node at (3.5,2.5) {10};
+    \node at (4.5,2.5) {21};
+
+    \node at (0.5,1.5) {18};
+    \node at (1.5,1.5) {6};
+    \node at (2.5,1.5) {3};
+    \node at (3.5,1.5) {15};
+    \node at (4.5,1.5) {7};
+
+    \node at (0.5,0.5) {24};
+    \node at (1.5,0.5) {11};
+    \node at (2.5,0.5) {20};
+    \node at (3.5,0.5) {23};
+    \node at (4.5,0.5) {12};
+
+    % Right half 
+    \node at (5.5,4.5) {42};
+    \node at (6.5,4.5) {34};
+    \node at (7.5,4.5) {27};
+    \node at (8.5,4.5) {41};
+    \node at (9.5,4.5) {33};
+
+    \node at (5.5,3.5) {29};
+    \node at (6.5,3.5) {39};
+    \node at (7.5,3.5) {44};
+    \node at (8.5,3.5) {30};
+    \node at (9.5,3.5) {38};
+
+    \node[fill=blue!10, draw=blue] at (5.5,2.5) {26};
+    \node at (6.5,2.5) {47};
+    \node at (7.5,2.5) {50};
+    \node at (8.5,2.5) {35};
+    \node at (9.5,2.5) {46};
+
+    \node at (5.5,1.5) {43};
+    \node at (6.5,1.5) {31};
+    \node at (7.5,1.5) {28};
+    \node at (8.5,1.5) {40};
+    \node at (9.5,1.5) {32};
+
+    \node at (5.5,0.5) {49};
+    \node at (6.5,0.5) {36};
+    \node at (7.5,0.5) {45};
+    \node at (8.5,0.5) {48};
+    \node at (9.5,0.5) {37};
+
+\end{tikzpicture}
+\caption{A $5 \times 10$ grid solved by tiling. The two halves have the same path connecting $v_{1,3}$ to $v_{3,3}$. In blue, the 'link' between two otherwise disjoint paths.}
+\label{fig:tiling_example}
+\end{figure}
+
+The following Lemmas, instead, focus on stacking Board Graphs vertically.
+
+\begin{lemma} \label{lem:two_boards_vertical}
+    For any Board Graph $\mathfrak{G}_{n \times m}$ with $9 \ge n, m \ge 5$, there exist at least $2$ distinct Winning Path $\mathfrak{h}$ such that:
+    $$
+        \mathfrak{h}_1 = v_{3,\,1} \land \mathfrak{h}_{nm} = v_{n,\,m} 
+    $$
+\end{lemma}
+
+Once again, a proof of the Lemma would require an enumeration of all the possible couples $(n,\,m)$, and their respective solved distinct Hamiltonian.
+\begin{lemma} \label{lem:tiling_vertical}
+    Given the Board Graph $\mathfrak{G}_{n \times (m + k)}$ with $9 \ge n, m, k \ge 5$, then $\mathfrak{G}_{n \times (m + k)}$ is solvable.
+\end{lemma}
+\begin{proof}
+    Consider the two Board Graphs $\mathfrak{G}_{n \times m}$ and $\mathfrak{G}_{n \times k}$.
+    Without loss of generality, assume $m \ge k$. Then, by knowing Lemma \ref{lem:two_boards_vertical}, both of them are solvable - since $9 \ge n, m, k \ge 5$.
+    Let $\mathfrak{h}^1$ be one of the Winning Paths in $\mathfrak{G}_{n \times m}$ guaranteed to exist;
+        and let $\mathfrak{h}^2$ be one of the Winning Paths in $\mathfrak{G}_{n \times k}$ guaranteed to exist, either by Lemma \ref{lem:two_boards_horizontal} or by Lemma \ref{lem:two_boards_vertical}.
+    Then, define $\hat{\mathfrak{h}}^2$ in the following way:
+    $$
+        \hat{\mathfrak{h}}^2 = (v_{i + n, m - j + 1} : v_{i,j} \in \mathfrak{h}^2)
+    $$
+    This path $\hat{\mathfrak{h}}^2$ is simply the path $\mathfrak{h}^2$ swapped over the columns and 'shifted' vertically by $n$ rows.
+        It can be proven that the following $\mathfrak{h}^3$ is indeed a Winning Path:
+    $$
+        \mathfrak{h}^3 = (\mathfrak{h}^1,\,\hat{\mathfrak{h}}^2)
+    $$
+    First of all, the two paths $\mathfrak{h}^1$ and $\hat{\mathfrak{h}}^2$ are disjoint, since they refer to different nodes of the graph; moreover, they completely 'touch' each node of the partitions, being Winning Paths.
+    The only thing left to prove is that the last node of $\mathfrak{h}^1$ is connected to the first node of $\hat{\mathfrak{h}}^2$.
+    By Lemma \ref{lem:two_boards_vertical}, the last node of $\mathfrak{h}^1$ is $v_{n,m}$ while the first node of $\hat{\mathfrak{h}}^2$ is $v_{n+3,\,m}$.
+    It can be easily verified that:
+    $$
+        (|n+3 - n| = 3 \land m = m)
+    $$
+    Hence, the edge $\{v_{n,m},\,v_{n+3,\,m}\}$ exists, giving a complete solution for the Board Graph $\mathfrak{G}_{n \times (m + k)}$.
+\end{proof}
+
+The need to rotate the second graph can be easily seen for rectangular grids, as illustrated below, in Figure \ref{fig:tiling_example_rectangular}.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+  \draw[step=1cm,gray,very thin] (0,0) grid (6,10);
+
+  \node at (0.5,9.5) {10};
+  \node at (1.5,9.5) {5};
+  \node at (2.5,9.5) {2};
+  \node at (3.5,9.5) {26};
+  \node at (4.5,9.5) {8};
+  \node at (5.5,9.5) {3};
+
+  \node at (0.5,8.5) {22};
+  \node at (1.5,8.5) {15};
+  \node at (2.5,8.5) {12};
+  \node at (3.5,8.5) {21};
+  \node at (4.5,8.5) {18};
+  \node at (5.5,8.5) {13};
+
+  \node at (0.5,7.5) {1};
+  \node at (1.5,7.5) {27};
+  \node at (2.5,7.5) {9};
+  \node at (3.5,7.5) {4};
+  \node at (4.5,7.5) {28};
+  \node at (5.5,7.5) {25};
+
+  \node at (0.5,6.5) {11};
+  \node at (1.5,6.5) {6};
+  \node at (2.5,6.5) {19};
+  \node at (3.5,6.5) {14};
+  \node at (4.5,6.5) {7};
+  \node at (5.5,6.5) {20};
+
+  \node at (0.5,5.5) {23};
+  \node at (1.5,5.5) {16};
+  \node at (2.5,5.5) {29};
+  \node at (3.5,5.5) {24};
+  \node at (4.5,5.5) {17};
+  \node[fill=blue!10, draw=blue] at (5.5,5.5) {30};
+
+    \node at (0.5,4.5) {44};
+    \node at (1.5,4.5) {49};
+    \node at (2.5,4.5) {56};
+    \node at (3.5,4.5) {43};
+    \node at (4.5,4.5) {48};
+    \node at (5.5,4.5) {55};
+
+    \node at (0.5,3.5) {52};
+    \node at (1.5,3.5) {35};
+    \node at (2.5,3.5) {46};
+    \node at (3.5,3.5) {51};
+    \node at (4.5,3.5) {34};
+    \node at (5.5,3.5) {41};
+
+    \node at (0.5,2.5) {38};
+    \node at (1.5,2.5) {58};
+    \node at (2.5,2.5) {32};
+    \node at (3.5,2.5) {37};
+    \node at (4.5,2.5) {57};
+    \node[fill=blue!10, draw=blue] at (5.5,2.5) {31};
+
+    \node at (0.5,1.5) {45};
+    \node at (1.5,1.5) {50};
+    \node at (2.5,1.5) {53};
+    \node at (3.5,1.5) {42};
+    \node at (4.5,1.5) {47};
+    \node at (5.5,1.5) {54};
+
+    \node at (0.5,0.5) {60};
+    \node at (1.5,0.5) {36};
+    \node at (2.5,0.5) {39};
+    \node at (3.5,0.5) {59};
+    \node at (4.5,0.5) {33};
+    \node at (5.5,0.5) {40};
+\end{tikzpicture}
+\caption{A $5 \times 6$ grid solved by tiling. The two halves have the same path, albeit rotated over the columns, connecting $v_{3,1}$ to $v_{5,6}$ and then $v_{8,6}$ and $v_{10,1}$. In blue, the 'link' between two otherwise disjoint paths.}
+\label{fig:tiling_example_rectangular}
+\end{figure}
 
 \vspace{0.6em}
 \begin{proof}
     \textbf{Lower Bound}. We will show that for any $n, m \ge 5$:
     $$
-        \mathbf{N}(\mathfrak{G}_{n \times m}) \ge 4^{\lfloor{\frac{n}{5}}\rfloor \lfloor{\frac{m}{5}}\rfloor}
+        \mathbf{N}(\mathfrak{G}_{n \times m}) \ge 2^{\lfloor{\frac{n}{5}}\rfloor \lfloor{\frac{m}{5}}\rfloor}
     $$
     To establish this, we can use a combinatorial argument based on the structure of the board graph.
 \end{proof}
