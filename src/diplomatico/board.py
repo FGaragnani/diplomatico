@@ -12,6 +12,7 @@ class Board:
         self.r: int = r
         self.c: int = c
         self.board: List[List[int]] = [[0 for _ in range(c)] for _ in range(r)]
+        self.step = 1
 
     def size(self) -> int:
         """
@@ -73,6 +74,68 @@ class Board:
             if self.is_valid_cell(new_row, new_col) and self.board[new_row][new_col] == 0:
                 moves.append((new_row, new_col))
         return moves
+    
+    def clean(self) -> None:
+        """
+        Reset the board to its initial uninitialized state.
+        """
+        self.board = [[0 for _ in range(self.c)] for _ in range(self.r)]
+        self.step = 1
+
+    def first_move(self, pos: Tuple[int, int]) -> bool:
+        """
+        Make the first move on the board.
+
+        :param pos: The position to place the first move as (row, col)
+        :return: True if the move was successful, False otherwise
+        """
+        self.clean()
+        if not self.is_valid_cell(pos[0], pos[1]) or self.board[pos[0]][pos[1]] != 0:
+            return False
+        self.board[pos[0]][pos[1]] = self.step
+        self.step += 1
+        return True
+
+    def move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> bool:
+        """
+        Move to a new position on the board.
+
+        :param from_pos: Current position as (row, col)
+        :param to_pos: New position as (row, col)
+        :param step: The step number to place in the new position
+        :return: True if the move was successful, False otherwise
+        """
+        if not self.is_valid_cell(from_pos[0], from_pos[1]) or not self.is_valid_cell(to_pos[0], to_pos[1]):
+            return False
+        if self.board[from_pos[0]][from_pos[1]] != (self.step - 1) or self.board[to_pos[0]][to_pos[1]] != 0:
+            return False
+        if to_pos not in self.available_moves(from_pos[0], from_pos[1]):
+            return False
+        
+        self.board[to_pos[0]][to_pos[1]] = self.step
+        self.step += 1
+        return True
+    
+    def unmove(self, pos: Tuple[int, int]) -> bool:
+        """
+        Undo the last move on the board.
+
+        :param pos: The position to remove the last move from as (row, col)
+        :return: True if the unmove was successful, False otherwise
+        """
+        if not self.is_valid_cell(pos[0], pos[1]) or self.board[pos[0]][pos[1]] != (self.step - 1):
+            return False
+        self.board[pos[0]][pos[1]] = 0
+        self.step -= 1
+        return True
+    
+    def is_complete(self) -> bool:
+        """
+        Check if the board is completely filled (no cells are 0).
+
+        :return: True if the board is complete, False otherwise
+        """
+        return self.step > self.size()
     
     @classmethod
     def print_board(cls, path: List[Tuple[int, int]]) -> None:
