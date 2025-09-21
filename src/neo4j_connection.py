@@ -5,11 +5,13 @@ from typing import List, Tuple, Dict, Optional
 
 from src.diplomatico.graph import BoardGraph
 from src.diplomatico.board import Board
+from src.solver import Solver
 
 class QueryType(Enum):
     RAW = "RAW"
     CONSTRUCTIVE = "CONSTRUCTIVE"
     APOC = "APOC"
+    PYTHON = "PYTHON"
 
     @staticmethod
     def from_str(val: str):
@@ -124,7 +126,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                 
             query += f'''
                         MATCH p = (start:Node)-[:MOVE*{parameters["pathLength"]}]->(end:Node)
-                        WHERE ALL(n IN nodes(p) WHERE single(m IN nodes(p) WHERE m = n))
+                        WHERE ALL(n IN nodes(p) WHERE single(m IN nodes(p) WHERE id(m) = id(n)))
                         RETURN p
                     '''
             
@@ -217,6 +219,11 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                         RETURN path
                     """
             parameters = {"pathLength": self.board_graph.board.size() - 1}
+
+        elif query_type == QueryType.PYTHON:
+            solver = Solver(self.board_graph.board)
+            paths = solver.solve(starting_point=starting_node, ending_point=ending_node, n=n)
+            return paths
 
         query += f"LIMIT {n}" if n else ""
         result = self.run_query(query=query, parameters=parameters)
