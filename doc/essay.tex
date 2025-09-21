@@ -317,17 +317,159 @@ The derived bounds demonstrate that the number of solutions increases exponentia
 Furthermore, identifying even a single solution is a challenging task. The subsequent sections will delve into different search strategies and evaluate their performance.
 
 \section{Implementation}
-Briefly describe:
-\begin{itemize}
-    \item Programming language and libraries (e.g., Python/NetworkX, SNAP)
-    \item Execution environment (hardware/software)
-    \item Complexity considerations
-\end{itemize}
+In order to analyze the solution space in the game of \textit{Diplomatico}, a few implementations have been developed.
+Three of them were done in Neo4J \cite{neo4j}, leveraging its graph database capabilities to model the Board Graphs and perform various queries. To make the comparison valuable, another implementation in Python has been tested along the other.
+Before any query is run, the Board Graph is generated and stored in the database offered by Neo4J through a simple script that simply requires the number of rows and of columns of the board.
+Moreover, each query can be edited by command line arguments, by specifying - if needed - the start node of the path, the end node of the path and the total number of paths required.
+
+The four main implementations of solution searching are briefly described below.
+
+\paragraph{The \texttt{Raw} Implementation}
+The \texttt{Raw} implementation is a straightforward query in Neo4J, which tries to expand from a starting node to find one or more Winning Paths.
+
+\begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!50!black]
+\begin{verbatim}
+MATCH p = (start:Node)
+ -[:MOVE*{parameters["pathLength"]}]->
+          (end:Node)
+WHERE ALL(
+    n IN nodes(p) WHERE 
+    single(m IN nodes(p) WHERE m = n)
+    )
+RETURN p
+\end{verbatim}
+\end{tcolorbox}
+
+The query above simply matches a path $p$ starting from any node labeled as \texttt{Node}, and tries to expand it by the number of edges specified in the parameter \texttt{pathLength} (which should be equal to $n \times m - 1$ for a board of size $n \times m$).
+The \texttt{WHERE} clause ensures that the path is Hamiltonian, by checking that every node in the path appears once and exactly once.
+
+The starting node can be specified by preappending a \texttt{MATCH (start:Node \{row: r, col: c\})} clause before the main \texttt{MATCH} clause, where \texttt{r} and \texttt{c} are the row and column of the desired starting node. The same applies to the end node.
+Moreover, the query could be modified to return only a few solutions (by adding a \texttt{LIMIT} clause at the end of the query).
+Thanks to the Python API of Neo4J, the element inside the \texttt{parameters} dictionary is modified at runtime.
+
+\paragraph{The \texttt{Constructive} Implementation}
+The \texttt{Raw} query, albeit simple, shows a few issues. The main problem being that it first finds all the possible paths of length $n \times m - 1$, and then filters out the non-Hamiltonian ones. This means that, for larger boards, the query will take a very long time to complete - if it completes at all.
+In order to address this issue, a more 'constructive' approach has been implemented. The idea is to start from a node, and to try to expand the path step by step, ensuring each time that the Hamiltonian property is preserved.
+The query is built in Python in the following way:
+\begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!50!black]
+\begin{verbatim}
+MATCH (n0:Node)-[:MOVE]->(n1:Node)
+WHERE id(n1) NOT IN {id(n0)}
+MATCH (n1)-[:MOVE]->(n2:Node)
+WHERE id(n2) NOT IN {id(n0), id(n1)}
+...
+\end{verbatim}
+\end{tcolorbox}
+
+The query then contains every full path at the end, and are guaranteed to be Hamiltonian.
+The starting and ending nodes can be specified in the same way as in the \texttt{Raw} implementation, as well as limiting to only a few solutions.
+
+\paragraph{The \texttt{APOC} Implementation}
+The \texttt{APOC} library \cite{apoc} for Neo4J contains the \texttt{apoc.path.expandConfig} procedure. By leveraging its parameters, it's possible to convert it into an Hamiltonian-finding algorithm.
+\begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!50!black]
+\begin{verbatim}
+MATCH (start:Node)
+CALL apoc.path.expandConfig(
+startNode, {
+relationshipFilter: "MOVE>",
+minLevel: {parameters["pathLength"]},
+maxLevel: {parameters["pathLength"]},
+uniqueness: "NODE_GLOBAL",
+labelFilter: 'Node'
+}
+    ) YIELD path
+\end{verbatim}
+\end{tcolorbox}
+
+If needed, the starting node can be specified in the same way as in the previous implementations; the ending node can be passed as an additional parameter to the APOC function itself, just like the number of paths to return.
+
+\paragraph{The \texttt{Python} Implementation}
+The last implementation is a pure Python one. It makes use of a backtracking algorithm to find one or more Winning Paths in a Board Graph.
+The algorithm is implemented in a recursive way, and it can be summarized as follows:
+\begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!50!black]
+\begin{verbatim}
+find_path(current_path, board):
+    if current_path covers all nodes:
+        return current_path;
+    for each move:
+        add move to current_path;
+        find_path(current_path, board);
+        remove move from current_path;
+\end{verbatim}
+\end{tcolorbox}
+
+Another known problem, similar to \textit{Diplomatico}, is the knight's tour problem.
+A well known heuristics for that problem is the Warnsdorff's rule \cite{warnsdorff}: this says to first visit nodes with fewest moves available.
+This heuristics has been implemented in the Python solution as well.
 
 \section{Results and Discussion}
 
-Discuss the insights obtained, highlight significant nodes/communities, 
-and interpret results in context.
+In this section, the results of the different approaches in finding Hamiltonian paths for the \textit{Diplomatico} graphs are analyzed.
+The experiments were conducted on Neo4J version 2025.07.01, and the APOC library version 2025.07.1core.
+The following results have been obtained by running each query - or algorithm - $5$ times, and by averaging the time taken to complete the task.
+The starting node and the ending node were not specified, and only one solution was required.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c c c c |}
+\hline
+\textbf{Board Size} & \textbf{Raw} & \textbf{Constructive} & \textbf{APOC} & \textbf{Python} \\ \hline
+\textbf{$4 \times 5$} & 0.4797s & 1.3337s & 0.1615s & \textbf{0.0085s}  \\ \hline
+\textbf{$4 \times 6$} & $>$30s & 2.3749s & 0.2981s & \textbf{0.0180s} \\ \hline
+\textbf{$4 \times 7$} & $>$30s & 4.4709s & 0.6444s & \textbf{0.1897s} \\ \hline
+\textbf{$5 \times 5$} & $>$30s & 5.7675s & 0.7468s & \textbf{0.0040s} \\ \hline
+\end{tabular}
+\end{table}
+
+While, instead, the following results have been obtained by running each query at the same conditions as above, but by also specifying the starting node as $v_{1,1}$ and the ending node as $v_{n,m}$ - the top-left and bottom-right corners of the board, respectively.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c c c c |}
+\hline
+\textbf{Board Size} & \textbf{Raw} & \textbf{Constructive} & \textbf{APOC} & \textbf{Python} \\ \hline
+\textbf{$4 \times 5$} & 0.7142s & 0.0417s & 0.0256s & \textbf{0.0032s}  \\ \hline
+\textbf{$4 \times 6$} & $>$30s & 0.0659s & \textbf{0.0250s} & 0.0514s \\ \hline
+\textbf{$4 \times 7$} & $>$30s & 3.2629s & \textbf{0.5479s} & 0.5982s \\ \hline
+\textbf{$5 \times 5$} & $>$30s & 0.6837s & 0.4557s & \textbf{0.0147s} \\ \hline
+\end{tabular}
+\end{table}
+
+In the following table, instead, not only the starting and ending nodes were specified, but also every solution was required.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c c c c |}
+\hline
+\textbf{Board Size} & \textbf{Raw} & \textbf{Constructive} & \textbf{APOC} & \textbf{Python} \\ \hline
+\textbf{$4 \times 5$} & 1.1492s & 0.0331s & 0.0143s & \textbf{0.0034s} \\ \hline
+\textbf{$4 \times 6$} & $>$30s & 0.6907s & \textbf{0.0307s} & 0.0503s \\ \hline
+\textbf{$4 \times 7$} & $>$30s & 16.6208s & \textbf{0.6338s} & 0.6547s \\ \hline
+\textbf{$5 \times 5$} & $>$30s & 3.1501s & 2.9022s & \textbf{0.4530s} \\ \hline
+\end{tabular}
+\end{table}
+
+As it can be easily seen, the two most competitive implementations are the \texttt{APOC} one and the pure \texttt{Python} one.
+In order to compare them, a few more tests have been conducted on larger boards - excluding the too slow \texttt{Raw} and \texttt{Constructive} implementations.
+More specifically, each of the following time results has been obtained as a mean over $20$ runs; only one solution was required and no starting and ending node were specified.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|c|c c|}
+\hline
+\textbf{Board Size} & \textbf{APOC} & \textbf{Python} \\ \hline
+\textbf{$5 \times 6$} & \textbf{0.0578s} & 0.4754s \\ \hline
+\textbf{$4 \times 8$} & \textbf{3.9755s} & 6.3072s \\ \hline
+\textbf{$5 \times 7$} & 0.1442s & \textbf{0.0007s} \\ \hline
+\textbf{$6 \times 6$} & \textbf{0.2700s} & 0.5473s \\ \hline
+\end{tabular}
+\end{table}
+
+As expected, as the board size increases, the time taken to find a solution has an exopnential growth.
+Curiously enough, it seems that - in general - solutions are easier to be find for more 'regular' board sizes, rather than very rectangular ones.
+This could be due to the fact that, in more rectangular boards, there are less possible moves available from each node - hence, the search space is smaller.
+Overall, the \texttt{APOC} implementation seems to be more stable in terms of time taken for runs, while the \texttt{Python} one starts going slower as the complexity rises.
+The board $5 \times 7$ is solved very fast - probably due Warnsdorff's heuristics working accurately well in this particular case.
 
 \section{Conclusion and Future Work}
 Summarize contributions, highlight key results, and suggest improvements or next steps.
@@ -336,7 +478,6 @@ Summarize contributions, highlight key results, and suggest improvements or next
 % References
 % ----------------------------
 \bibliographystyle{IEEEtran}
-\newpage
 \bibliography{references}
 
 \newpage
@@ -496,8 +637,6 @@ Once again, a proof of the Lemma would require an enumeration of all the possibl
     Hence, the edge $\{v_{n,m},\,v_{n+3,\,m}\}$ exists, giving a complete solution for the Board Graph $\mathfrak{G}_{n \times (m + k)}$.
 \end{proof}
 
-The need to rotate the second graph can be easily seen for rectangular grids, as illustrated below, in Figure \ref{fig:tiling_example_rectangular}.
-
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
@@ -581,9 +720,25 @@ The need to rotate the second graph can be easily seen for rectangular grids, as
 \begin{proof}
     \textbf{Lower Bound}. We will show that for any $n, m \ge 5$:
     $$
-        \mathbf{N}(\mathfrak{G}_{n \times m}) \ge 2^{\lfloor{\frac{n}{5}}\rfloor \lfloor{\frac{m}{5}}\rfloor}
+        \mathbf{N}(\mathfrak{G}_{n \times m}) \ge 2^{(n - 4)(m - 4)/25}
     $$
     To establish this, we can use a combinatorial argument based on the structure of the board graph.
+    More specifically, given a generic Board Graph $\mathfrak{G}_{n \times m}$, we can partition it into smaller sub-graphs of size $5 \times 5$ plus - in case of $n,m$ not divisible by $5$ - some additional sub-graphs of size $k_i \times \ell_i$, with $9 \ge k_i, \ell_i \ge 5$.
+    Thanks to Lemma \ref{lem:tiling} and Lemma \ref{lem:tiling_vertical}, we know that all these sub-graphs are solvable, and particularly that the whole Board Graph $\mathfrak{G}_{n \times m}$ is also solvable, by tiling the sub-graphs accordingly.
+    
+    The total number of sub-graphs in which to partition the original Board Graph is $\lfloor\dfrac{n}{5}\rfloor \cdot \lfloor\dfrac{m}{5}\rfloor$.
+    This can be proven by simply considering that each sub-graph has a size of $5 \times 5$; hence, the number of sub-graphs that can fit in the original Board Graph is simply the integer division of the dimensions of the original graph by $5$.
+    Each of these sub-graphs has at least $2$ distinct Winning Paths, as guaranteed by Lemma \ref{lem:two_boards_horizontal} and Lemma \ref{lem:two_boards_vertical}.
+    This means that, combinatorially speaking, the total number of distinct Winning Paths in the original Board Graph is at least:
+    $$
+        \mathbf{N}(\mathfrak{G}_{n \times m}) \ge 2^{\lfloor n/5 \rfloor \cdot \lfloor m/5 \rfloor}
+    $$
+    In order to show the original, exponential in $n,m$, bound, it's only necessary to consider that:
+    $$
+        \lfloor n/5 \rfloor \ge (n - 4)/5
+    $$
+    This is because, in the worst case scenario, $n = 5 \times k + 4$; hence, $\lfloor n/5 \rfloor = k$ and $(n - 4)/5 = k$.
+    The same reasoning applies to $m$; hence, the original bound is proven.
 \end{proof}
 
 \end{document}
