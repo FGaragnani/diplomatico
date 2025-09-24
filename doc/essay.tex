@@ -164,8 +164,7 @@ For example, it has been shown that the game is unsolvable for square grids of s
 \label{fig:trivial_case}
 \end{figure}
 
-The game can be easily modeled as a graph. Each square of the grid is represented as a node; each available 'move' (i.e., a transition from a square to another according to the game rules) is represented as a directed edge between two nodes.
-This representation allows us to apply various graph analytics techniques to analyze not only the solution space, but also the most effective way to determine a solution to the game.
+The game can be easily modeled as a graph. Each square of the grid is represented as a node; each available 'move' (i.e., a transition from a square to another according to the game rules) is represented as a directed edge between two nodes. Hence, as it will be shown, finding a solution means finding an Hamiltonian path inside this particular type of graph. It is known that determining if a graph allows an Hamiltonian path is an NP-Complete problem \cite{np}. It will be shown, moreover, the number of solutions for the game of \textit{Diplomatico} grows exponentially over the size of the grid.
 
 \section{Preliminaries}
 The following definitions are used throughout this work. The main case being considered is the one in which the game grid is rectangular and doesn't have any cell blocked.
@@ -405,7 +404,7 @@ This heuristics has been implemented in the Python solution as well.
 \section{Results and Discussion}
 
 In this section, the results of the different approaches in finding Hamiltonian paths for the \textit{Diplomatico} graphs are analyzed.
-The experiments were conducted on Neo4J version 2025.07.01, and the APOC library version 2025.07.1core.
+The experiments were conducted on Neo4J version 2025.07.01, and the APOC library version 2025.07.1core. The softwares were given maximum 16GB of RAM to execute the code.
 The following results have been obtained by running each query - or algorithm - $5$ times, and by averaging the time taken to complete the task.
 The starting node and the ending node were not specified, and only one solution was required.
 
@@ -470,6 +469,20 @@ Curiously enough, it seems that - in general - solutions are easier to be find f
 This could be due to the fact that, in more rectangular boards, there are less possible moves available from each node - hence, the search space is smaller.
 Overall, the \texttt{APOC} implementation seems to be more stable in terms of time taken for runs, while the \texttt{Python} one starts going slower as the complexity rises.
 The board $5 \times 7$ is solved very fast - probably due Warnsdorff's heuristics working accurately well in this particular case.
+
+Hereafter follow an overview of the number of solutions.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|c|c|}
+		\hline
+		\textbf{Board Size} & \textbf{N° of Solutions} \\ \hline
+		\textbf{$4 \times 5$} & 144	\\ \hline
+		\textbf{$4 \times 6$} & 128	\\ \hline
+		\textbf{$4 \times 7$} & 72  \\ \hline
+		\textbf{$5 \times 5$} & 12400 \\ \hline 
+	\end{tabular}
+\end{table}
 
 \section{Conclusion and Future Work}
 Summarize contributions, highlight key results, and suggest improvements or next steps.
