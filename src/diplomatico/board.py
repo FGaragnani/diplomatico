@@ -1,6 +1,9 @@
 from typing import Optional, List, Tuple
 
 class Board:
+    """
+        Class representing the game board.
+    """
 
     def __init__(self, r: int, c: int):
         """
@@ -199,6 +202,69 @@ class TestBoard(unittest.TestCase):
         self.assertFalse(board.is_valid_cell(-1, 0))
         self.assertFalse(board.is_valid_cell(0, 2))
         self.assertFalse(board.is_valid_cell(2, 0))
+
+    def test_available_moves(self):
+        board = Board(5, 5)
+        board.first_move((2, 2))
+        moves = set(board.available_moves(2, 2))
+        expected = set([
+            (4, 4), (0, 4), (4, 0), (0, 0),
+            (2, 5), (2, -1), (5, 2), (-1, 2)
+        ])
+        # Only valid moves should be present
+        valid_moves = set(filter(lambda pos: board.is_valid_cell(*pos), expected))
+        self.assertEqual(moves, valid_moves)
+
+    def test_clean(self):
+        board = Board(2, 2)
+        board.board[0][0] = 1
+        board.step = 2
+        board.clean()
+        self.assertTrue(board.is_uninitialized())
+        self.assertEqual(board.step, 1)
+
+    def test_first_move(self):
+        board = Board(2, 2)
+        self.assertTrue(board.first_move((1, 1)))
+        self.assertEqual(board.board[1][1], 1)
+        board.clean()
+        self.assertFalse(board.first_move((2, 2)))  # Out of bounds
+
+    def test_move_and_unmove(self):
+        board = Board(5, 5)
+        self.assertTrue(board.first_move((2, 2)))
+        # Pick a valid move
+        moves = board.available_moves(2, 2)
+        if moves:
+            to_pos = moves[0]
+            self.assertTrue(board.move((2, 2), to_pos))
+            self.assertEqual(board.board[to_pos[0]][to_pos[1]], 2)
+            self.assertTrue(board.unmove(to_pos))
+            self.assertEqual(board.board[to_pos[0]][to_pos[1]], 0)
+            self.assertEqual(board.step, 2)
+        # Invalid move (occupied cell)
+        self.assertFalse(board.move((2, 2), (2, 2)))
+
+    def test_is_complete(self):
+        board = Board(2, 2)
+        self.assertFalse(board.is_complete())
+        # Fill the board
+        board.board = [[1, 2], [3, 4]]
+        board.step = 5
+        self.assertTrue(board.is_complete())
+
+    def test_print_board(self):
+        # Test output for a simple path
+        path = [(0, 0), (0, 1), (1, 1), (1, 0)]
+        import io
+        import sys
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+        Board.print_board(path)
+        sys.stdout = sys.__stdout__
+        output = captured_output.getvalue()
+        self.assertIn(" 1|  2|", output)
+        self.assertIn(" 4|  3|", output)
 
 if __name__ == "__main__":
     unittest.main()
