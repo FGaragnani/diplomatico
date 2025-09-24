@@ -7,7 +7,6 @@ A solver for the *Diplomatico* puzzle, using Neo4J and Python.
 
 ## Structure
 - `src/` - Main application code
-- `neo4j/` - Neo4J interface scripts
 - `doc/` - LaTeX essay
 
 
