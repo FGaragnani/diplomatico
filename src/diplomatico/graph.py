@@ -3,6 +3,9 @@ from src.diplomatico.board import Board
 import unittest
 
 class Node:
+    """
+        Class representing a node in the graph.
+    """
 
     def __init__(self, r: int, c: int):
         self.r = r
@@ -15,6 +18,9 @@ class Node:
         return f"Node({self.r}, {self.c})"
 
 class BoardGraph:
+    """
+        Class representing the Board Graph.
+    """
 
     def __init__(self, board: Board):
         self.board = board
@@ -26,6 +32,11 @@ class BoardGraph:
         self._set_adjacency_matrix()
 
     def _create_nodes(self) -> List[Node]:
+        """
+            Create nodes for each cell in the board.
+
+            :return: List of Node objects representing each cell in the board
+        """
         nodes = []
         for r in range(self.board.r):
             for c in range(self.board.c):
@@ -33,6 +44,11 @@ class BoardGraph:
         return nodes
     
     def _set_adjacency_matrix(self) -> List[List[int]]:
+        """
+            Set the adjacency matrix based on the board's available moves.
+
+            :return: The adjacency matrix as a list of lists
+        """
         for i, node1 in enumerate(self.nodes):
             moves: List[Tuple[int, int]] = self.board.available_moves(node1.r, node1.c)
             for move in moves:
