@@ -1,25 +1,30 @@
+
 # Diplomatico
 
 A solver for the *Diplomatico* puzzle, using Neo4J and Python.
+
+---
 
 ## Structure
 - `src/` - Main application code
 - `neo4j/` - Neo4J interface scripts
 - `doc/` - LaTeX essay
 
+
 ## Setup
 1. Install Python dependencies (see requirements.txt):
    ```bash
    pip install -r requirements.txt
    ```
-2. Ensure Neo4J is running locally or remotely
-3. Configure connection settings in `src/config.py`:
-   ```
+2. Ensure Neo4J is running locally or remotely. **Tested with Neo4J 5.x and APOC 5.x** (see [Neo4J Download](https://neo4j.com/download/) and [APOC Docs](https://neo4j.com/labs/apoc/)).
+3. Configure connection settings in `src/config.py` (do not commit real passwords!):
+   ```python
    # Configuration for Neo4J connection
    NEO4J_URI = "bolt://localhost:7687"
    NEO4J_USER = "neo4j"
    NEO4J_PASSWORD = "password"  # Change to your actual password
    ```
+   You may copy `src/config.py` to `src/config.example.py` for sharing safe defaults.
 
 ---
 
@@ -34,6 +39,25 @@ An example of a filled $5 \times 5$ grid:
 | 1 | 22 | 25 | 10 | 21 |
 | 18 | 6 | 3 | 15 | 7 |
 | 24 | 11 | 20 | 23 | 12 |
+
+---
+
+## Testing & Batch Usage
+
+To run a suite of experiments and log results, use the provided batch script:
+
+```powershell
+test.bat
+```
+
+This will execute multiple runs of `main.py` with various parameters and append results to `test_output.txt`.
+
+To verify your installation, try:
+
+```powershell
+python main.py --r 5 --c 5 --query_type PYTHON --n 1
+```
+
 ---
 
 ## main.py — Solution Finder CLI
@@ -76,6 +100,7 @@ python main.py --r <rows> --c <cols> --query_type <RAW|CONSTRUCTIVE|APOC|PYTHON>
 python main.py --r 7 --c 7 --query_type APOC --n 1 --starting_node 0,0 --ending_node 6,6 --t 5
 ```
 
+
 ### Notes
 
 - For large boards, `RAW` queries may be slow or infeasible.
@@ -83,6 +108,19 @@ python main.py --r 7 --c 7 --query_type APOC --n 1 --starting_node 0,0 --ending_
 - Even for the `PYTHON` method, a Neo4J connection is required to build the board graph.
 
 ---
+
+## Contributing
+
+Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request. For major changes, please discuss them in an issue first.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
+---
+
 
 ## Essay
 
