@@ -4,10 +4,22 @@ from tqdm import tqdm
 from src.diplomatico.board import Board
 
 class Solver:
+    """
+        Solver class implementing a backtracking algorithm to find Hamiltonian paths on the board.
+    """
     def __init__(self, board: Board):
         self.board = board
 
     def _backtrack(self, current_pos: Tuple[int, int], ending_point: Tuple[int, int], paths: List[List[Tuple[int, int]]], current_path: List[Tuple[int, int]], n: Optional[int]) -> None:
+        """
+            Backtracking algorithm to find Hamiltonian paths.
+
+            :param current_pos: The current position on the board as (row, col).
+            :param ending_point: The required ending position on the board as (row, col).
+            :param paths: The list to store found paths.
+            :param current_path: The current path being explored.
+            :param n: The maximum number of paths to find (None for unlimited).
+        """
         if self.board.is_complete():
             paths.append(current_path.copy())
             return
@@ -28,13 +40,25 @@ class Solver:
                 current_path.pop()
 
     def solve(self, starting_point: Optional[Tuple[int, int]] = None, ending_point: Optional[Tuple[int, int]] = None, n: Optional[int] = None, progress: bool = False) -> List[List[Tuple[int, int]]]:
+        """
+            Solve the Hamiltonian path problem using backtracking.
+
+            :param starting_point: Optional starting point as (row, col).
+            :param ending_point: Optional ending point as (row, col).
+            :param n: The maximum number of paths to find (None for unlimited).
+            :param progress: Whether to show progress (only for PYTHON query type).
+            :return: A list of found Hamiltonian paths, each path is a list of (row, col) tuples.
+        """
         starting_points = [starting_point] if starting_point else [(r, c) for r in range(self.board.r) for c in range(self.board.c)]
         ending_points = [ending_point] if ending_point else [(r, c) for r in range(self.board.r) for c in range(self.board.c)]
+        if progress:
+            starting_points = tqdm(starting_points, desc="Start Nodes")
+            ending_points = tqdm(ending_points, desc="End Nodes")
         paths: List[List[Tuple[int, int]]] = []
 
         while True:
-            for start in tqdm(starting_points, desc="Start Nodes"):
-                for end in tqdm(ending_points, desc="End Nodes"):
+            for start in starting_points:
+                for end in ending_points:
                     if start == end:
                         continue
 
