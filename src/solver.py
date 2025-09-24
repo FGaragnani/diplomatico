@@ -1,4 +1,5 @@
 from typing import Optional, Tuple, List
+from tqdm import tqdm
 
 from src.diplomatico.board import Board
 
@@ -26,14 +27,14 @@ class Solver:
                 self.board.unmove(move)
                 current_path.pop()
 
-    def solve(self, starting_point: Optional[Tuple[int, int]] = None, ending_point: Optional[Tuple[int, int]] = None, n: Optional[int] = None) -> List[List[Tuple[int, int]]]:
+    def solve(self, starting_point: Optional[Tuple[int, int]] = None, ending_point: Optional[Tuple[int, int]] = None, n: Optional[int] = None, progress: bool = False) -> List[List[Tuple[int, int]]]:
         starting_points = [starting_point] if starting_point else [(r, c) for r in range(self.board.r) for c in range(self.board.c)]
         ending_points = [ending_point] if ending_point else [(r, c) for r in range(self.board.r) for c in range(self.board.c)]
         paths: List[List[Tuple[int, int]]] = []
 
         while True:
-            for start in starting_points:
-                for end in ending_points:
+            for start in tqdm(starting_points, desc="Start Nodes"):
+                for end in tqdm(ending_points, desc="End Nodes"):
                     if start == end:
                         continue
 

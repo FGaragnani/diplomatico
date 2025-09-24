@@ -94,7 +94,9 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                     query += f"CREATE (n_{i // c}_{i % c})-[:MOVE]->(n_{j // c}_{j % c})\n"
         self.run_query(query)
 
-    def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, n: Optional[int] = 1, starting_node: Optional[Tuple[int, int]] = None, ending_node: Optional[Tuple[int, int]] = None) -> List:
+    def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, 
+                          n: Optional[int] = 1, starting_node: Optional[Tuple[int, int]] = None, 
+                          ending_node: Optional[Tuple[int, int]] = None, progress: bool = False) -> List:
         """
             Calculate the Hamiltonian paths' number for the current board.
 
@@ -222,7 +224,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
 
         elif query_type == QueryType.PYTHON:
             solver = Solver(self.board_graph.board)
-            paths = solver.solve(starting_point=starting_node, ending_point=ending_node, n=n)
+            paths = solver.solve(starting_point=starting_node, ending_point=ending_node, n=n, progress=progress)
             return paths
 
         query += f"LIMIT {n}" if n else ""

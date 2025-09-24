@@ -24,7 +24,8 @@ def main(r: int, c: int, n: Optional[int], query_type: str,
                 query_type=QueryType.from_str(query_type), 
                 n=n, 
                 starting_node=starting_node,
-                ending_node=ending_node
+                ending_node=ending_node,
+                progress=True
             )
             end_time = time.time()
             times.append(end_time - start_time)
