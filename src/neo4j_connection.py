@@ -8,6 +8,9 @@ from src.diplomatico.board import Board
 from src.solver import Solver
 
 class QueryType(Enum):
+    """
+        Enum for the type of query to run.
+    """
     RAW = "RAW"
     CONSTRUCTIVE = "CONSTRUCTIVE"
     APOC = "APOC"
@@ -21,6 +24,10 @@ class QueryType(Enum):
         raise ValueError(f"Unknown QueryType: {val}")
 
 class Neo4JConnection:
+    """
+        Base class for Neo4J connection and utility methods.
+        Provides methods to check server status, run queries, and clean the graph.
+    """
     def __init__(self):
         self.graph = Graph(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
@@ -47,7 +54,7 @@ class Neo4JConnection:
         except Exception as e:
             return False
     
-    def clean_graph(self):
+    def clean_graph(self) -> None:
         """
             Clean the Neo4j graph by removing all nodes and relationships.
         """
@@ -70,6 +77,9 @@ class Neo4JConnection:
         return self.graph.run(query, parameters).data()
 
 class Neo4JConnectionDiplomatico(Neo4JConnection):
+    """
+        Neo4J connection class specific to the Diplomatico application.
+    """
     def __init__(self):
         super().__init__()
 
@@ -104,6 +114,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
             :param n: The number of paths to return.
             :param starting_node: Optional starting node as (row, col).
             :param ending_node: Optional ending node as (row, col).
+            :param progress: Whether to show progress (only for PYTHON query type).
             :return: The Hamiltonian paths.
         """
         query = ""
@@ -235,7 +246,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
         """
             Parse a path returned by the Neo4j query into a list of (row, col) tuples.
 
-            :param path: The path returned by the Neo4j query.
+            :param result: The path returned by the Neo4j query.
             :return: A list of (row, col) tuples representing the path.
         """
         paths = []
