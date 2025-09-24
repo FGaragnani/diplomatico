@@ -1,15 +1,13 @@
 
 @echo off
-REM Looping test runner for main.py — iterates over (r,c) and query types and appends parameters + output to a single file
 set OUTPUT=test_output.txt
 
 echo Test run started at %DATE% %TIME% > %OUTPUT%
 echo ======================================= >> %OUTPUT%
 
-REM Activate conda environment (works with "conda activate" available in PATH)
-call conda activate diplomatico
+REM Activate conda environment --- If the dependencies are in a conda environment
+REM call conda activate diplomatico
 
-REM Define board sizes (r,c) pairs and query types
 setlocal enabledelayedexpansion
 set SIZES="4,5" "4,6" "4,7" "5,5"
 set QTYPES=CONSTRUCTIVE APOC PYTHON
