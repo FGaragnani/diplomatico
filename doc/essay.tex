@@ -485,7 +485,11 @@ Hereafter follow an overview of the number of solutions.
 \end{table}
 
 \section{Conclusion and Future Work}
-Summarize contributions, highlight key results, and suggest improvements or next steps.
+This work has presented a comprehensive graph-based analysis of the solution space in the game of \textit{Diplomatico}. By modeling the puzzle as a Board Graph and leveraging both Neo4J and Python implementations, we have demonstrated the exponential complexity inherent in enumerating Hamiltonian paths and provided empirical benchmarks for several search strategies. The results highlight the effectiveness of advanced graph database procedures (such as APOC) and heuristic-driven algorithms (notably Warnsdorff's rule) in efficiently navigating large solution spaces. 
+
+Key findings include the derivation of theoretical bounds on the number of solutions, the identification of structural properties that impact solvability, and the comparative performance of different computational approaches. The experiments confirm that exhaustive search quickly becomes infeasible as board size increases, underscoring the need for scalable heuristics and optimized queries.
+
+Future work may focus on extending these methods to boards with blocked cells, exploring parallelization strategies, and integrating machine learning techniques to predict solvability or guide search. Additionally, further theoretical investigation into tighter bounds and the combinatorial structure of solution spaces could yield deeper insights. The approaches and tools developed here provide a solid foundation for ongoing research in combinatorial puzzles and graph analytics.
 
 % ----------------------------
 % References
