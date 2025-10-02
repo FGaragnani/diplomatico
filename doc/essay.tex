@@ -771,16 +771,16 @@ The Python function implementing the creation of this query is described in the 
 \begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!50!black]
 \begin{verbatim}
 create_graph_query(rows, cols):
-	for i = 1, ..., rows:
-		for j = 1, ..., cols:
+	for i = 0, ..., rows - 1:
+		for j = 0, ..., cols - 1:
 			query += create_query(i, j)
 \end{verbatim}
 \end{tcolorbox}
 
-This snippet regulates the creation of all the necessary nodes, each with its own specific properties. The code loops through all the possible row indices (from $1$ to the input parameter $\texttt{rows}$) and through all the possible column indices. For every possible pair of row and column indices, then, it stores a line created by the method \texttt{create\_query(i, j)}. This returns the following query:
+This snippet regulates the creation of all the necessary nodes, each with its own specific properties. The code loops through all the possible row indices (from $0$ to the input parameter $\texttt{rows} - 1$) and through all the possible column indices. For every possible pair of row and column indices, then, it stores a line created by the method \texttt{create\_query(i, j)}. This returns the following query:
 \begin{center}
 	\texttt{"CREATE (n\_i\_j:Node \{row: i, col: j\})$\backslash$n"}
 \end{center}
-of course, substituting the two parameters $i,\,j$ with the passed values. For instance, for the node at position $(2, 3)$, the line will ask to create a node with label \texttt{Node}, called \texttt{n\_2\_3}, and with properties \texttt{row=}$2$ and \texttt{col=}$3$.
+of course, substituting the two parameters $i,\,j$ with the passed values. For instance, for the node at position $(2, 3)$, the line will ask to create a node with label \texttt{Node}, called \texttt{n\_1\_2}, and with properties \texttt{row=}$1$ and \texttt{col=}$2$ (because values start from $0$).
 
 \end{document}
