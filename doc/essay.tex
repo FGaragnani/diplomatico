@@ -315,7 +315,7 @@ The more complex proof of the lower bound is given in Appendix \ref{appendix:pro
 The derived bounds demonstrate that the number of solutions increases exponentially with the board's size. This exponential growth renders exhaustive search methods infeasible for larger boards, emphasizing the necessity for more efficient algorithms and heuristics to navigate the solution space effectively. 
 Furthermore, identifying even a single solution is a challenging task. The subsequent sections will delve into different search strategies and evaluate their performance.
 
-\section{Implementation}
+\section{Implementation}									\label{sec:implementation}
 In order to analyze the solution space in the game of \textit{Diplomatico}, a few implementations have been developed.
 Three of them were done in Neo4J \cite{neo4j}, leveraging its graph database capabilities to model the Board Graphs and perform various queries. To make the comparison valuable, another implementation in Python has been tested along the other.
 Before any query is run, the Board Graph is generated and stored in the database offered by Neo4J through a simple script that simply requires the number of rows and of columns of the board.
@@ -360,7 +360,7 @@ WHERE id(n2) NOT IN {id(n0), id(n1)}
 \end{verbatim}
 \end{tcolorbox}
 
-The query then contains every full path at the end, and are guaranteed to be Hamiltonian.
+The query then contains every full path at the end, and these are guaranteed by construction to be Hamiltonian.
 The starting and ending nodes can be specified in the same way as in the \texttt{Raw} implementation, as well as limiting to only a few solutions.
 
 \paragraph{The \texttt{APOC} Implementation}
@@ -464,7 +464,7 @@ More specifically, each of the following time results has been obtained as a mea
 \end{tabular}
 \end{table}
 
-As expected, as the board size increases, the time taken to find a solution has an exopnential growth.
+As expected, as the board size increases, the time taken to find a solution has an exponential growth.
 Curiously enough, it seems that - in general - solutions are easier to be find for more 'regular' board sizes, rather than very rectangular ones.
 This could be due to the fact that, in more rectangular boards, there are less possible moves available from each node - hence, the search space is smaller.
 Overall, the \texttt{APOC} implementation seems to be more stable in terms of time taken for runs, while the \texttt{Python} one starts going slower as the complexity rises.
@@ -489,7 +489,7 @@ This work has presented a comprehensive graph-based analysis of the solution spa
 
 Key findings include the derivation of theoretical bounds on the number of solutions, the identification of structural properties that impact solvability, and the comparative performance of different computational approaches. The experiments confirm that exhaustive search quickly becomes infeasible as board size increases, underscoring the need for scalable heuristics and optimized queries.
 
-Future work may focus on extending these methods to boards with blocked cells, exploring parallelization strategies, and integrating machine learning techniques to predict solvability or guide search. Additionally, further theoretical investigation into tighter bounds and the combinatorial structure of solution spaces could yield deeper insights. The approaches and tools developed here provide a solid foundation for ongoing research in combinatorial puzzles and graph analytics.
+Future work may focus on extending these methods to boards with blocked cells, exploring parallelization strategies, and integrating machine learning techniques to predict solvability or guide search. Additionally, further theoretical investigation into tighter bounds and the combinatorial structure of solution spaces could yield deeper insights. The approaches and tools developed here provide just a solid foundation for still unexplored game of Diplomatico.
 
 % ----------------------------
 % References
@@ -500,7 +500,9 @@ Future work may focus on extending these methods to boards with blocked cells, e
 \newpage
 % IEEEtran prefers \appendices to format appendix headings correctly
 \appendices
-\section{Over the Lower Bound of the Number of Solutions}\label{appendix:proof_lower_bound}
+\section{Over the Lower Bound of the Number of Solutions} 	\label{appendix:proof_lower_bound}
+
+
 Here is the detailed proof of the lower bound referenced in the main text, specifically for Proposition \ref{prop:bounds_number_of_solutions}.
 First, some handful lemmas are presented.
 
@@ -757,5 +759,28 @@ Once again, a proof of the Lemma would require an enumeration of all the possibl
     This is because, in the worst case scenario, $n = 5 \times k + 4$; hence, $\lfloor n/5 \rfloor = k$ and $(n - 4)/5 = k$.
     The same reasoning applies to $m$; hence, the original bound is proven.
 \end{proof}
+
+\section{Over the Creation of a Board Graph in Neo4J}		\label{appendix:neo4j}
+In order to provide a common ground for retrieving a solution in Neo4J \cite{neo4j} (see Section \ref{sec:implementation}), a variable-dependent query was designed to create a Board Graph of desired size. The structure of the graph is organized in the following way:
+\begin{itemize}
+	\item Each node is created with the label \texttt{Node}, and has - as properties - \textit{row} and \textit{col}, respectively the indeces of row and of column in the original board-like structure.
+	\item Each link between two nodes (present only if a legal move allows the movement between those two nodes) is created, with label \texttt{MOVE}.
+\end{itemize}
+The Python function implementing the creation of this query is described in the current Appendix in pseudocode.
+
+\begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!50!black]
+\begin{verbatim}
+create_graph_query(rows, cols):
+	for i = 1, ..., rows:
+		for j = 1, ..., cols:
+			query += create_query(i, j)
+\end{verbatim}
+\end{tcolorbox}
+
+This snippet regulates the creation of all the necessary nodes, each with its own specific properties. The code loops through all the possible row indices (from $1$ to the input parameter $\texttt{rows}$) and through all the possible column indices. For every possible pair of row and column indices, then, it stores a line created by the method \texttt{create\_query(i, j)}. This returns the following query:
+\begin{center}
+	\texttt{"CREATE (n\_i\_j:Node \{row: i, col: j\})$\backslash$n"}
+\end{center}
+of course, substituting the two parameters $i,\,j$ with the passed values. For instance, for the node at position $(2, 3)$, the line will ask to create a node with label \texttt{Node}, called \texttt{n\_2\_3}, and with properties \texttt{row=}$2$ and \texttt{col=}$3$.
 
 \end{document}
