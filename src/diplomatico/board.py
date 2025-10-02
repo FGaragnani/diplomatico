@@ -178,6 +178,21 @@ class Board:
                     if (i, j) not in corners:
                         borders.append((i, j))
         return borders
+    
+    def get_unique_nodes(self) -> List[Tuple[int, int]]:
+        """
+        Get the unique nodes of the board; not keeping two nodes that are the same under symmetry.
+
+        :return: A list of tuples representing the unique nodes of the board
+        """
+        nodes = []
+        for i in range((self.r // 2) + self.r % 2):
+            for j in range((self.c // 2) + self.c % 2):
+                if self.r == self.c:
+                    if i > j:
+                        continue
+                nodes.append((i, j))
+        return nodes
 
     @classmethod
     def print_board(cls, path: List[Tuple[int, int]]) -> None:
@@ -304,6 +319,26 @@ class TestBoard(unittest.TestCase):
         output = captured_output.getvalue()
         self.assertIn(" 1|  2|", output)
         self.assertIn(" 4|  3|", output)
+
+    def test_get_unique_nodes_examples(self):
+        # 3x3 grid: should yield (0,0), (0,1), (1,1)
+        board_3x3 = Board(3, 3)
+        expected_3x3 = [(0, 0), (0, 1), (1, 1)]
+        self.assertEqual(sorted(board_3x3.get_unique_nodes()), sorted(expected_3x3))
+
+        # 3x4 grid: should yield (0,0), (0,1), (1,1), (1,0)
+        board_3x4 = Board(3, 4)
+        expected_3x4 = [(0, 0), (0, 1), (1, 1), (1, 0)]
+        self.assertEqual(sorted(board_3x4.get_unique_nodes()), sorted(expected_3x4))
+
+        # 4x4 grid: should yield the same as 3x4
+        board_4x4 = Board(4, 4)
+        expected_4x4 = [(0, 0), (0, 1), (1, 1)]
+        self.assertEqual(sorted(board_4x4.get_unique_nodes()), sorted(expected_4x4))
+
+        board_4x7 = Board(4, 7)
+        expected_4x7 = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3)]
+        self.assertEqual(sorted(board_4x7.get_unique_nodes()), sorted(expected_4x7))
 
 if __name__ == "__main__":
     unittest.main()
