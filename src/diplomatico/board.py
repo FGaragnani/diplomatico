@@ -140,6 +140,45 @@ class Board:
         """
         return self.step > self.size()
     
+    def get_center_node(self) -> List[Tuple[int, int]]:
+        """
+        Get the center node of the board.
+
+        :return: A tuple (row, col) representing the center of the board
+        """
+        if self.r % 2 == 1:
+            row_indices = [self.r // 2]
+        else:
+            row_indices = [self.r // 2 - 1, self.r // 2]
+        if self.c % 2 == 1:
+            col_indices = [self.c // 2]
+        else:
+            col_indices = [self.c // 2 - 1, self.c // 2]
+        return [(r, c) for r in row_indices for c in col_indices]
+    
+    def get_corners(self) -> List[Tuple[int, int]]:
+        """
+        Get the corner nodes of the board.
+
+        :return: A list of tuples representing the corners of the board
+        """
+        return [(0, 0), (0, self.c - 1), (self.r - 1, 0), (self.r - 1, self.c - 1)]
+    
+    def get_borders(self) -> List[Tuple[int, int]]:
+        """
+        Get the border nodes of the board (excluding corners).
+
+        :return: A list of tuples representing the border cells of the board
+        """
+        borders = []
+        corners = self.get_corners()
+        for i in range(self.r):
+            for j in range(self.c):
+                if i == 0 or i == self.r - 1 or j == 0 or j == self.c - 1:
+                    if (i, j) not in corners:
+                        borders.append((i, j))
+        return borders
+
     @classmethod
     def print_board(cls, path: List[Tuple[int, int]]) -> None:
         """
