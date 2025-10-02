@@ -294,3 +294,54 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                 node_coords.append((row, col))
             paths.append(node_coords)
         return paths
+    
+    def node_centrality(self, i: int, j: int, centralities: List[str] = ["degree"]) -> Dict:
+        """
+            Calculate the centrality measures of a node at position (i, j), including degree, closeness, and betweenness.
+        """
+
+        if not self.board_graph.board.is_valid_cell(i, j):
+            raise ValueError(f"Invalid node position: ({i}, {j})")
+
+        # create projection
+        query = f"""
+                    CALL gds.graph.drop('myGraph');
+                    """
+        self.run_query(query)
+    
+        query = f"""
+                    CALL gds.graph.project(
+                        'myGraph',
+                        'Node',
+                        'MOVE'
+                    );
+                """
+        self.run_query(query)
+
+        for centrality in centralities:
+            has_centrality = f"""
+                MATCH (n:Node {{row: {i}, col: {j}}})
+                RETURN n.{centrality} IS NOT NULL AS has{centrality.capitalize()}
+                            """
+            result = self.run_query(has_centrality)
+            if not result[0][f'has{centrality.capitalize()}']:
+                compute_centrality = f"""
+                                    CALL gds.{centrality}.write(
+                                        'myGraph',
+                                        {{
+                                            writeProperty: '{centrality}'
+                                        }}
+                                        );"""
+                self.run_query(compute_centrality)
+        
+        query = f"""
+                    MATCH (n:Node {{row: {i}, col: {j}}})
+                    RETURN
+                """
+        for centrality in centralities:
+            query += f"n.{centrality} AS {centrality},\n"
+        query = query.rstrip(",\n") + "\n"
+
+        result = self.run_query(query)
+
+        return result[0] if result else {}
