@@ -44,6 +44,19 @@ class Neo4JConnection:
         except Exception as e:
             return False
         
+    def is_gds_installed(self) -> bool:
+        """
+            Check if GDS is installed in the Neo4j database.
+        """
+        try:
+            result = self.graph.run("CALL gds.version() YIELD version RETURN version").data()
+            if result:
+                return True
+            else:
+                return False
+        except Exception as e:
+            return False
+        
     def is_server_running(self) -> bool:
         """
             Check if the Neo4j server is running.
@@ -302,6 +315,8 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
 
         if not self.board_graph.board.is_valid_cell(i, j):
             raise ValueError(f"Invalid node position: ({i}, {j})")
+        if not self.is_gds_installed():
+            raise RuntimeError("GDS is not installed.")
 
         # create projection
         query = f"""
