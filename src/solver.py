@@ -7,8 +7,9 @@ class Solver:
     """
         Solver class implementing a backtracking algorithm to find Hamiltonian paths on the board.
     """
-    def __init__(self, board: Board):
+    def __init__(self, board: Board, warnsdorf: bool = True):
         self.board = board
+        self.warnsdorf = warnsdorf
 
     def _backtrack(self, current_pos: Tuple[int, int], ending_point: Tuple[int, int], paths: List[List[Tuple[int, int]]], current_path: List[Tuple[int, int]], n: Optional[int]) -> None:
         """
@@ -25,9 +26,10 @@ class Solver:
             return
         
         moves = self.board.available_moves(current_pos[0], current_pos[1])
-        moves.sort(     # Warnsdorf's rule
-            key=lambda move: len(self.board.available_moves(move[0], move[1]))
-        )
+        if self.warnsdorf:
+            moves.sort(     # Warnsdorf's rule
+                key=lambda move: len(self.board.available_moves(move[0], move[1]))
+            )
         for move in moves:
             if self.board.step == self.board.size() and move != ending_point:
                 continue
