@@ -77,6 +77,24 @@ class Neo4JConnection:
                 """
         self.run_query(query)
 
+    def create_projection(self, create_query: str, graph_name: str = "myGraph") -> None:
+        """
+            Create a graph projection in the Neo4j database; it the projection already exists, it will be dropped first.
+
+            :param query: The Cypher query to create the projection.
+            :param graph_name: The name of the graph projection.
+        """
+        if not self.is_gds_installed():
+            raise RuntimeError("GDS is not installed.")
+        check_query = f"CALL gds.graph.exists('{graph_name}') YIELD exists RETURN exists;"
+        result = self.run_query(check_query)
+        if result and result[0]['exists']:
+            drop_query = f"CALL gds.graph.drop('{graph_name}');"
+            self.run_query(drop_query)
+            self.run_query(create_query)
+        else:
+            self.run_query(create_query)
+
     def run_query(self, query, parameters=None):
         """
             Run a Cypher query against the Neo4j database.
@@ -319,10 +337,6 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
             raise RuntimeError("GDS is not installed.")
 
         # create projection
-        query = f"""
-                    CALL gds.graph.drop('myGraph');
-                    """
-        self.run_query(query)
     
         query = f"""
                     CALL gds.graph.project(
@@ -331,7 +345,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
                         'MOVE'
                     );
                 """
-        self.run_query(query)
+        self.create_projection(query, graph_name="myGraph")
 
         for centrality in centralities:
             has_centrality = f"""
