@@ -7,7 +7,8 @@ from src.neo4j_connection import Neo4JConnectionDiplomatico, QueryType
 def main(r: int, c: int, n: Optional[int], query_type: str,
          t: Optional[int] = None, 
          starting_node: Optional[Tuple[int, int]] = None, 
-         ending_node: Optional[Tuple[int, int]] = None):
+         ending_node: Optional[Tuple[int, int]] = None,
+         warnsdorf: bool = True):
     
     conn = Neo4JConnectionDiplomatico()
 
@@ -25,7 +26,8 @@ def main(r: int, c: int, n: Optional[int], query_type: str,
                 n=n, 
                 starting_node=starting_node,
                 ending_node=ending_node,
-                progress=True
+                progress=True,
+                warnsdorf=warnsdorf
             )
             end_time = time.time()
             times.append(end_time - start_time)
@@ -64,5 +66,6 @@ if __name__ == "__main__":
     parser.add_argument("--starting_node", type=parse_node, required=False, help="Starting node as 'row,col'", default=None)
     parser.add_argument("--ending_node", type=parse_node, required=False, help="Ending node as 'row,col'", default=None)
     parser.add_argument("--t", type=int, required=False, help="How many times to try and average the time", default=None)
+    parser.add_argument("--w", required=False, help="Use Warnsdorf's rule (only for PYTHON query type)")
     args = parser.parse_args()
-    main(r=args.r, c=args.c, n=args.n, t=args.t, query_type=args.query_type, starting_node=args.starting_node, ending_node=args.ending_node)
+    main(r=args.r, c=args.c, n=args.n, t=args.t, query_type=args.query_type, starting_node=args.starting_node, ending_node=args.ending_node, warnsdorf=bool(args.w))
