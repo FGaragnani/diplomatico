@@ -137,7 +137,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
 
     def hamiltonian_paths(self, query_type: QueryType = QueryType.RAW, 
                           n: Optional[int] = 1, starting_node: Optional[Tuple[int, int]] = None, 
-                          ending_node: Optional[Tuple[int, int]] = None, progress: bool = False) -> List:
+                          ending_node: Optional[Tuple[int, int]] = None, progress: bool = False, warnsdorf: bool = True) -> List:
         """
             Calculate the Hamiltonian paths' number for the current board.
 
@@ -146,6 +146,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
             :param starting_node: Optional starting node as (row, col).
             :param ending_node: Optional ending node as (row, col).
             :param progress: Whether to show progress (only for PYTHON query type).
+            :param warnsdorf: Whether to use Warnsdorf's rule (only for PYTHON query type).
             :return: The Hamiltonian paths.
         """
         query = ""
@@ -265,7 +266,7 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
             parameters = {"pathLength": self.board_graph.board.size() - 1}
 
         elif query_type == QueryType.PYTHON:
-            solver = Solver(self.board_graph.board)
+            solver = Solver(self.board_graph.board, warnsdorf=warnsdorf)
             paths = solver.solve(starting_point=starting_node, ending_point=ending_node, n=n, progress=progress)
             return paths
 
