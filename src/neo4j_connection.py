@@ -49,7 +49,7 @@ class Neo4JConnection:
             Check if GDS is installed in the Neo4j database.
         """
         try:
-            result = self.graph.run("CALL gds.version() YIELD version RETURN version").data()
+            result = self.graph.run("CALL gds.version() YIELD gdsVersion RETURN gdsVersion").data()
             if result:
                 return True
             else:
