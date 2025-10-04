@@ -15,6 +15,8 @@
 \usepackage{etoolbox}
 \usepackage{enumerate}
 \usepackage[most]{tcolorbox}
+\usepackage[font=small,labelfont=bf,labelsep=colon,justification=centering]{caption}
+\captionsetup[table]{position=bottom} % put captions below tables
 \tcbuselibrary{theorems}
 
 \newtheorem{definition}{Definition}[section]
@@ -125,46 +127,55 @@ We apply various graph analytics techniques to uncover structural properties of 
 % ----------------------------
 
 \section{Introduction}
-The game of \textit{Diplomatico} is a combinatorial puzzle game, usually played on a square grid.
-The goal of the game is to fill the grid with numbers, by placing them according to the following rules:
+The game of \textit{Diplomatico} is a combinatorial puzzle played on a rectangular grid. 
+The objective is to fill the grid with consecutive numbers, subject to the following rules:
 \begin{enumerate}
-    \item The number $1$ can be placed on any available square.
-    \item The number $i > 1$ must be placed either at a distance of $3$ horizontally or vertically, or at a distance of $2$ diagonally from the square containing the number $i-1$.
-    \item If the number $i$ cannot be placed, the game ends.
+	\item The number $1$ may be placed on any available square.
+	\item For $i > 1$, the number $i$ must be placed either at a distance of $3$ horizontally or vertically, or at a distance of $2$ diagonally from the square containing $i-1$.
+	\item If no valid square is available for placing $i$, the game ends.
 \end{enumerate}
 
-An example of valid moves is shown in Figure \ref{fig:example_moves}.
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}
-  \draw[step=1cm,gray,very thin] (0,0) grid (4,4);
-  \node at (1.5,1.5) {$1$};
-  \node at (3.5,3.5) {$2$};
-  \node at (0.5,3.5) {$3$};
-  \node at (0.5,0.5) {$4$};
-  \node at (3.5,0.5) {$5$};
-  \node at (1.5,2.5) {$6$};
-\end{tikzpicture}
-\caption{A $4 \times 4$ grid following the rules of \textit{Diplomatico}. The number $2$ is placed diagonally from $1$; while the number $3$ is placed horizontally from $2$.}
-\label{fig:example_moves}
-\end{figure}
-
-As it can be seen, the requirement of a square grid is completely arbitrary. The game could be also played on rectangular grids with or without 'blocked' cells (i.e., squares which are not available).
-
-Some very simple results are known about the game. 
-For example, it has been shown that the game is unsolvable for square grids of size $4 \times 4$ or smaller - except for the trivial case in which the grid is of size $1 \times 1$ (see Figure \ref{fig:trivial_case}).
+An example of valid moves is shown in Figure~\ref{fig:example_moves}. 
+Here, the number $2$ is placed diagonally with respect to $1$, while $3$ follows by a horizontal move from $2$.
 
 \begin{figure}[ht]
-\centering
-\begin{tikzpicture}
-  \draw[step=1cm,gray,very thin] (0,0) grid (1,1);
-  \node at (0.5,0.5) {$1$};
-\end{tikzpicture}
-\caption{The trivial case of a $1 \times 1$ grid.}
-\label{fig:trivial_case}
+	\centering
+	\begin{tikzpicture}
+		\draw[step=1cm,gray,very thin] (0,0) grid (4,4);
+		\node at (1.5,1.5) {$1$};
+		\node at (3.5,3.5) {$2$};
+		\node at (0.5,3.5) {$3$};
+		\node at (0.5,0.5) {$4$};
+		\node at (3.5,0.5) {$5$};
+		\node at (1.5,2.5) {$6$};
+	\end{tikzpicture}
+	\caption{A $4 \times 4$ grid following the rules of \textit{Diplomatico}.}
+	\label{fig:example_moves}
 \end{figure}
 
-The game can be easily modeled as a graph. Each square of the grid is represented as a node; each available 'move' (i.e., a transition from a square to another according to the game rules) is represented as a directed edge between two nodes. Hence, as it will be shown, finding a solution means finding an Hamiltonian path inside this particular type of graph. It is known that determining if a graph allows an Hamiltonian path is an NP-Complete problem \cite{np}. It will be shown, moreover, the number of solutions for the game of \textit{Diplomatico} grows exponentially over the size of the grid.
+Although the game is often introduced on square grids, this restriction is not essential: \textit{Diplomatico} can also be played on rectangular grids of arbitrary size, possibly with some cells blocked (i.e., unavailable for placement).
+
+A few preliminary results are immediate. 
+In particular, the game is unsolvable for square grids of size $4 \times 4$ or smaller, except for the trivial case of a $1 \times 1$ grid (see Figure~\ref{fig:trivial_case}).
+
+\begin{figure}[ht]
+	\centering
+	\begin{tikzpicture}
+		\draw[step=1cm,gray,very thin] (0,0) grid (1,1);
+		\node at (0.5,0.5) {$1$};
+	\end{tikzpicture}
+	\caption{The trivial case of a $1 \times 1$ grid.}
+	\label{fig:trivial_case}
+\end{figure}
+
+The rules of the game admit a natural graph-theoretic formulation. 
+Each cell of the grid is represented as a node, and a valid move (as defined above) corresponds to a directed edge between two nodes. 
+Thus, constructing a valid play corresponds to finding a directed Hamiltonian path in this graph. 
+Since determining whether a Hamiltonian path exists is an NP-complete problem~\cite{np}, the complexity of solving \textit{Diplomatico} grows rapidly with the grid size. 
+This observation motivates the need for efficient heuristics and search strategies. 
+Some classical approaches (such as Warnsdorff's Rule~\cite{warnsdorff}) will be revisited in this context, along with new strategies inspired by graph-theoretic centrality measures. 
+In particular, we will investigate the relationship between different centrality indices (betweenness, closeness, degree, eigenvector) and the number of Hamiltonian paths available on a given board configuration. 
+This correlation analysis provides insight into the structural properties of the game graph and their potential role in guiding play.
 
 \section{Preliminaries}
 The following definitions are used throughout this work. The main case being considered is the one in which the game grid is rectangular and doesn't have any cell blocked.
@@ -216,6 +227,39 @@ Definition \ref{def:solvability} simply states that a Board Graph is solvable if
 
 Simply from the Definitions \ref{def:board_graph}-\ref{def:solvability}, it is possible to prove the following Proposition.
 
+\begin{figure}[ht]
+	\centering
+	\begin{tikzpicture}
+		\draw[step=1cm,gray,very thin] (0,0) grid (4,4);
+		\foreach \x in {1,2,3,4} {
+			\foreach \y in {1,2,3,4} {
+				\ifnum\x=\y
+				\pgfmathparse{mod(\x,2)==0}
+				\ifnum\pgfmathresult=1
+				\node[fill=red!10, draw=red] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
+				\else
+				\node[fill=green!10, draw=green] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
+				\fi
+				\else
+				\pgfmathparse{\x+\y==5}
+				\ifnum\pgfmathresult=1
+				\pgfmathparse{mod(\x,2)==0}
+				\ifnum\pgfmathresult=1
+				\node[fill=orange!15, draw=orange] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
+				\else
+				\node[fill=blue!10, draw=blue] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
+				\fi
+				\else
+				\node at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
+				\fi
+				\fi
+			}
+		}
+	\end{tikzpicture}
+	\caption{The board representing the graph $\mathfrak{G}_{4 \times 4}$. In corresponding colors, the only possible edges from each central node.}
+	\label{fig:dim_unsolvability_4x4}
+\end{figure}
+
 \begin{proposition}{Unsolvability of $\mathfrak{G}_{4 \times 4}$}{}
 \label{prop:unsolvability_4x4}
 
@@ -239,39 +283,6 @@ The same reasoning can be applied to the other three 'central' nodes; this means
 
 \end{proof}
 
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}
-  \draw[step=1cm,gray,very thin] (0,0) grid (4,4);
-  \foreach \x in {1,2,3,4} {
-    \foreach \y in {1,2,3,4} {
-        \ifnum\x=\y
-            \pgfmathparse{mod(\x,2)==0}
-            \ifnum\pgfmathresult=1
-                \node[fill=red!10, draw=red] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
-            \else
-                \node[fill=green!10, draw=green] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
-            \fi
-        \else
-            \pgfmathparse{\x+\y==5}
-            \ifnum\pgfmathresult=1
-                \pgfmathparse{mod(\x,2)==0}
-                \ifnum\pgfmathresult=1
-                    \node[fill=orange!15, draw=orange] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
-                \else
-                    \node[fill=blue!10, draw=blue] at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
-                \fi
-            \else
-                \node at (\x-0.5,4.5-\y) {$v_{\y,\x}$};
-            \fi
-        \fi
-    }
-  }
-\end{tikzpicture}
-\caption{The board representing the graph $\mathfrak{G}_{4 \times 4}$. In corresponding colors, the only possible edges from each central node.}
-\label{fig:dim_unsolvability_4x4}
-\end{figure}
-
 The following Definition and Proposition will give a sense to the complexity of the game, and to the main focus of the work.
 
 \begin{definition}{Numbers of Solutions}{}
@@ -292,31 +303,15 @@ $$
     2^{(n - 4)(m - 4)/25} \le \mathbf{N}(\mathfrak{G}_{n \times m}) < 7^{nm - 1}
 $$
 \end{proposition}
-\begin{proof}
-    \textbf{Upper Bound.} 
-        Any winning path $\mathfrak{h}$ must pass from a 'corner' node (i.e., $v_{1,1},\,v_{1,m},\,v_{n,1},\,v_{n,m}$). By evaluating the possibilities, it can be easily determined that only three edges are connected to any corner node.
-        \begin{align*}
-            &\forall e = \{v_{1,1},\;v_{i,j}\} \in E, \\
-            &(|1 - i| = 3 \land 1 = j) \implies v_{i,j} \in \{v_{4,1},\,v_{-2,1}\} \\
-            &(|1 - j| = 3 \land 1 = i) \implies v_{i,j} \in \{v_{1,4},\,v_{1,-2}\} \\
-            &(|1 - i| = |1 - j| = 2) \implies \\
-            &\quad\quad v_{i,j} \in \{v_{3,3},\,v_{3,-1},\,v_{-1,3},\,v_{-1,-1}\}
-        \end{align*}
-        In this specific case, the only possible adjacent nodes are $v_{4,1},\,v_{1,4},\,v_{3,3}$. The same reasoning applies to the other corner nodes.
 
-        Moreover, the start node - in the general scenario - will have at most $8$ edges connected to it (assuming, from the previous verification, that each node is valid). Every other node, however, will have at most $7$: surely, the edge chosen to reach it should not be considered, otherwise the Winning Path wouldn't be Hamiltonian.
-        This means that, combinatorially speaking:
-        $$
-            \mathbf{N}(\mathfrak{G}_{n \times m}) \leq 8 \cdot 3^4 \cdot 7^{nm - 5} < 7^{nm - 1}
-        $$
-\end{proof}
-The more complex proof of the lower bound is given in Appendix \ref{appendix:proof_lower_bound}.
+The proof of Proposition \ref{prop:bounds_number_of_solutions} is given in Appendix \ref{appendix:proof_bound}.
 
 The derived bounds demonstrate that the number of solutions increases exponentially with the board's size. This exponential growth renders exhaustive search methods infeasible for larger boards, emphasizing the necessity for more efficient algorithms and heuristics to navigate the solution space effectively. 
 Furthermore, identifying even a single solution is a challenging task. The subsequent sections will delve into different search strategies and evaluate their performance.
 
 \section{Implementation}									\label{sec:implementation}
-In order to analyze the solution space in the game of \textit{Diplomatico}, a few implementations have been developed.
+\subsubsection{Finding solutions}
+In order to efficiently analyze the solution space in the game of \textit{Diplomatico}, a few implementations have been developed.
 Three of them were done in Neo4J \cite{neo4j}, leveraging its graph database capabilities to model the Board Graphs and perform various queries. To make the comparison valuable, another implementation in Python has been tested along the other.
 Before any query is run, the Board Graph is generated and stored in the database offered by Neo4J through a simple script that simply requires the number of rows and of columns of the board.
 Moreover, each query can be edited by command line arguments, by specifying - if needed - the start node of the path, the end node of the path and the total number of paths required.
@@ -399,13 +394,51 @@ find_path(current_path, board):
 
 Another known problem, similar to \textit{Diplomatico}, is the knight's tour problem.
 A well known heuristics for that problem is the Warnsdorff's rule \cite{warnsdorff}: this says to first visit nodes with fewest moves available.
-This heuristics has been implemented in the Python solution as well.
+This heuristics has been implemented in the Python solution as well, and the effects of this rule over the speed of resolution has been analyzed in Section \ref{sec:results}.
+
+\subsubsection{Centrality Measures}
+The aim of this work also included the analysis of some graph-theoretic centrality measures to provide specific heuristics for solving a Board Graph. For analysis purposes, these can be directly computed inside a Neo4J server through the apposite \texttt{gds} library \cite{gds}. The centrality measures employed are listed below.
+
+\paragraph{Degree Centrality} Given an undirected graph $G = (V, E)$, the \textbf{degree centrality} of a node $v \in V$ is exactly the number of edges this node has:
+$$
+	C_D(v) = |\{e \in E | v \in e\}|
+$$
+This value can be normalized by dividing each node's value by the maximum centrality found within the graph.
+
+\paragraph{Betweeness Centrality}
+Given a graph $G = (V, E)$, the \textbf{betweenness centrality} of a node $v \in V$ is defined as the number of shortest paths between pairs of nodes that pass through $v$. 
+Formally, let $\sigma_{st}$ be the total number of shortest paths between nodes $s, t \in V$, and let $\sigma_{st}(v)$ be the number of those paths that pass through $v$. 
+Then
+$$
+C_B(v) = \sum_{\substack{s, t \in V \\ s \neq v \neq t}} \frac{\sigma_{st}(v)}{\sigma_{st}}.
+$$
+Nodes with high betweenness act as bridges, controlling the flow of information between different regions of the graph.
+
+\paragraph{Closeness Centrality} 
+The \textbf{closeness centrality} of a node $v \in V$ measures how close $v$ is to all other nodes in the graph. 
+It is defined as the reciprocal of the sum of the shortest-path distances $d(v,u)$ from $v$ to every other node $u \in V$: 
+$$
+C_C(v) = \frac{1}{\sum_{u \in V \setminus \{v\}} d(v, u)}.
+$$
+Nodes with high closeness centrality can reach other nodes quickly and are often well-positioned to spread information.
+
+\paragraph{Eigenvector Centrality} 
+The \textbf{eigenvector centrality} of a node $v \in V$ assigns relative scores to nodes such that connections to high-scoring nodes contribute more than connections to low-scoring ones. 
+Formally, it is defined as the $v$-th component of the principal eigenvector of the adjacency matrix $A$ of the graph:
+$$
+C_E(v) = \frac{1}{\lambda} \sum_{u \in V} A_{vu} C_E(u),
+$$
+where $\lambda$ is the largest eigenvalue of $A$. 
+This centrality highlights nodes that are influential not just by their degree, but by being connected to other important nodes.
 
 \section{Results and Discussion}
+\label{sec:results}
 
-In this section, the results of the different approaches in finding Hamiltonian paths for the \textit{Diplomatico} graphs are analyzed.
-The experiments were conducted on Neo4J version 2025.07.01, and the APOC library version 2025.07.1core. The softwares were given maximum 16GB of RAM to execute the code.
-The following results have been obtained by running each query - or algorithm - $5$ times, and by averaging the time taken to complete the task.
+In this section, the results of the different approaches in finding Hamiltonian paths for the \textit{Diplomatico} graphs are analyzed, along with some improved versions enhanced by the results of the centrality measures.
+The experiments were conducted on Neo4J version 2025.07.01, the APOC library version 2025.07.1core and the gds library version 2.20.0. The softwares were given maximum 16GB of RAM to execute the code.
+
+\subsubsection{Searching the Solution Space}
+The results shown in Table \ref{tab:onesol} have been obtained by running each query - or algorithm - $5$ times, and by averaging the time taken to complete the task.
 The starting node and the ending node were not specified, and only one solution was required.
 
 \begin{table}[ht]
@@ -418,9 +451,11 @@ The starting node and the ending node were not specified, and only one solution 
 \textbf{$4 \times 7$} & $>$30s & 4.4709s & 0.6444s & \textbf{0.1897s} \\ \hline
 \textbf{$5 \times 5$} & $>$30s & 5.7675s & 0.7468s & \textbf{0.0040s} \\ \hline
 \end{tabular}
+\caption{Time results in finding only one solution for a certain board graph.}
+\label{tab:onesol}
 \end{table}
 
-While, instead, the following results have been obtained by running each query at the same conditions as above, but by also specifying the starting node as $v_{1,1}$ and the ending node as $v_{n,m}$ - the top-left and bottom-right corners of the board, respectively.
+While, instead, the results shown in Tabel \ref{tab:onesolcon} have been obtained by running each query at the same conditions as above, but by also specifying the starting node as $v_{1,1}$ and the ending node as $v_{n,m}$ - the top-left and bottom-right corners of the board, respectively.
 
 \begin{table}[ht]
 \centering
@@ -432,9 +467,11 @@ While, instead, the following results have been obtained by running each query a
 \textbf{$4 \times 7$} & $>$30s & 3.2629s & \textbf{0.5479s} & 0.5982s \\ \hline
 \textbf{$5 \times 5$} & $>$30s & 0.6837s & 0.4557s & \textbf{0.0147s} \\ \hline
 \end{tabular}
+\caption{Time results in finding only one solution, with constraints on the starting and ending nodes.}
+\label{tab:onesolcon}
 \end{table}
 
-In the following table, instead, not only the starting and ending nodes were specified, but also every solution was required.
+In Table \ref{tab:solscon}, instead, not only the starting and ending nodes were specified, but also every solution was required.
 
 \begin{table}[ht]
 \centering
@@ -446,11 +483,13 @@ In the following table, instead, not only the starting and ending nodes were spe
 \textbf{$4 \times 7$} & $>$30s & 16.6208s & \textbf{0.6338s} & 0.6547s \\ \hline
 \textbf{$5 \times 5$} & $>$30s & 3.1501s & 2.9022s & \textbf{0.4530s} \\ \hline
 \end{tabular}
+\caption{Time results in finding every solution, with constraints on the starting and ending nodes.}
+\label{tab:solscon}
 \end{table}
 
 As it can be easily seen, the two most competitive implementations are the \texttt{APOC} one and the pure \texttt{Python} one.
 In order to compare them, a few more tests have been conducted on larger boards - excluding the too slow \texttt{Raw} and \texttt{Constructive} implementations.
-More specifically, each of the following time results has been obtained as a mean over $20$ runs; only one solution was required and no starting and ending node were specified.
+More specifically, each of the time results shown in Table \ref{tab:onesolL} has been obtained as a mean over $20$ runs; only one solution was required and no starting and ending node were specified.
 
 \begin{table}[ht]
 \centering
@@ -462,15 +501,32 @@ More specifically, each of the following time results has been obtained as a mea
 \textbf{$5 \times 7$} & 0.1442s & \textbf{0.0007s} \\ \hline
 \textbf{$6 \times 6$} & \textbf{0.2700s} & 0.5473s \\ \hline
 \end{tabular}
+\caption{Time results in finding only one solution for larger boards.}
+\label{tab:onesolL}
 \end{table}
 
 As expected, as the board size increases, the time taken to find a solution has an exponential growth.
-Curiously enough, it seems that - in general - solutions are easier to be find for more 'regular' board sizes, rather than very rectangular ones.
+Curiously enough, it seems that - in general - solutions are easier to be find for more 'regular' board sizes, rather than very rectangular ones. Solutions also seem easier to find if the starting and ending node are specified - probably because this reduces the overall search space.
 This could be due to the fact that, in more rectangular boards, there are less possible moves available from each node - hence, the search space is smaller.
 Overall, the \texttt{APOC} implementation seems to be more stable in terms of time taken for runs, while the \texttt{Python} one starts going slower as the complexity rises.
 The board $5 \times 7$ is solved very fast - probably due Warnsdorff's heuristics working accurately well in this particular case.
 
-Hereafter follow an overview of the number of solutions.
+In Table \ref{tab:warn}, it has been compared the usage of the Warnsdorff's rule with a random choice for the nodes; the results have been obtained by averaging over $10$ runs of the algorithms. Except a few cases, as a rule of thumb, it could be said that employing Warnsdorff's rule for choosing the next node is an efficient strategy, improving by a bit the results in time complexity.
+
+\begin{table}[ht]
+	\setlength{\tabcolsep}{3pt}
+	\centering
+	\begin{tabular}{|c|c|c|c|c|c|c|c|}
+		\hline
+		 $4 \times 5$ & $4 \times 6$ & $4 \times 7$ & $5 \times 5$ & $5 \times 6$ & $4 \times 8$ & $5 \times 7$ & $6 \times 6$ \\ \hline
+		 \scriptsize 0.0085s & \scriptsize \textbf{0.0180s} & \scriptsize\textbf{ 0.1897s} & \scriptsize \textbf{0.0040s} & \scriptsize 0.4754s & \scriptsize 6.3072s & \scriptsize \textbf{0.0007s} & \scriptsize \textbf{0.5473s} \\
+		 \scriptsize  \textbf{0.0055s} & \scriptsize 0.0241s & \scriptsize 0.2776s & \scriptsize 0.0330s & \scriptsize \textbf{0.0462s} & \scriptsize \textbf{4.5177s} & \scriptsize $>$30s & \scriptsize 0.8116s \\ \hline
+	\end{tabular}
+	\caption{Comparison between employing Warnsdorff's rule (first row) or random nodes (second row).}
+	\label{tab:warn}
+\end{table}
+
+Table \ref{tab:sols} shows a collection of the number of solutions for boards that have been completely explored.
 
 \begin{table}[ht]
 	\centering
@@ -482,7 +538,12 @@ Hereafter follow an overview of the number of solutions.
 		\textbf{$4 \times 7$} & 72  \\ \hline
 		\textbf{$5 \times 5$} & 12400 \\ \hline 
 	\end{tabular}
+	\caption{Number of solutions for each board graph thouroghly analyzed.}
+	\label{tab:sols}
 \end{table}
+
+\subsubsection{Starting Nodes}
+The usage of centrality measures, as it will be seen, 
 
 \section{Conclusion and Future Work}
 This work has presented a comprehensive graph-based analysis of the solution space in the game of \textit{Diplomatico}. By modeling the puzzle as a Board Graph and leveraging both Neo4J and Python implementations, we have demonstrated the exponential complexity inherent in enumerating Hamiltonian paths and provided empirical benchmarks for several search strategies. The results highlight the effectiveness of advanced graph database procedures (such as APOC) and heuristic-driven algorithms (notably Warnsdorff's rule) in efficiently navigating large solution spaces. 
@@ -500,11 +561,30 @@ Future work may focus on extending these methods to boards with blocked cells, e
 \newpage
 % IEEEtran prefers \appendices to format appendix headings correctly
 \appendices
-\section{Over the Lower Bound of the Number of Solutions} 	\label{appendix:proof_lower_bound}
-
-
+\section{Over the Bounds of the Number of Solutions} 	\label{appendix:proof_bound}
 Here is the detailed proof of the lower bound referenced in the main text, specifically for Proposition \ref{prop:bounds_number_of_solutions}.
-First, some handful lemmas are presented.
+The first part - the upper bound - of the proof can be easily given, while a set of intermediate results are later needed for the second part of it - the lower bound.
+\vspace{0.6em}
+\begin{proof}
+	\textbf{Upper Bound.} 
+	Any winning path $\mathfrak{h}$ must pass from a 'corner' node (i.e., $v_{1,1},\,v_{1,m},\,v_{n,1},\,v_{n,m}$). By evaluating the possibilities, it can be easily determined that only three edges are connected to any corner node.
+	\begin{align*}
+		&\forall e = \{v_{1,1},\;v_{i,j}\} \in E, \\
+		&(|1 - i| = 3 \land 1 = j) \implies v_{i,j} \in \{v_{4,1},\,v_{-2,1}\} \\
+		&(|1 - j| = 3 \land 1 = i) \implies v_{i,j} \in \{v_{1,4},\,v_{1,-2}\} \\
+		&(|1 - i| = |1 - j| = 2) \implies \\
+		&\quad\quad v_{i,j} \in \{v_{3,3},\,v_{3,-1},\,v_{-1,3},\,v_{-1,-1}\}
+	\end{align*}
+	In this specific case, the only possible adjacent nodes are $v_{4,1},\,v_{1,4},\,v_{3,3}$. The same reasoning applies to the other corner nodes.
+	
+	Moreover, the start node - in the general scenario - will have at most $8$ edges connected to it (assuming, from the previous verification, that each node is valid). Every other node, however, will have at most $7$: surely, the edge chosen to reach it should not be considered, otherwise we would obtain a path that couldn't be Hamiltonian - reaching an already visited node.
+	This means that, combinatorially speaking:
+	$$
+	\mathbf{N}(\mathfrak{G}_{n \times m}) \leq 8 \cdot 3^4 \cdot 7^{nm - 5} < 7^{nm - 1}
+	$$
+\end{proof}
+
+To reach the second part of the proof, some handful lemmas are presented.
 
 \begin{lemma} \label{lem:two_boards_horizontal}
     For any Board Graph $\mathfrak{G}_{n \times m}$ with $9 \ge n, m \ge 5$, there exist at least $2$ distinct Winning Path $\mathfrak{h}$ such that:
@@ -521,6 +601,77 @@ This constraint guarantees the possibility to create a tilization of the board f
 \begin{lemma} \label{lem:tiling}
     Given the Board Graph $\mathfrak{G}_{(n+k) \times m}$ with $9 \ge n, m, k \ge 5$, then $\mathfrak{G}_{(n + k) \times m}$ is solvable.
 \end{lemma}
+\begin{figure}[ht]
+	\centering
+	\begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
+		\draw[step=1cm,gray,very thin] (0,0) grid (10,5);
+		
+		\node at (0.5,4.5) {17};
+		\node at (1.5,4.5) {9};
+		\node at (2.5,4.5) {2};
+		\node at (3.5,4.5) {16};
+		\node at (4.5,4.5) {8};
+		
+		\node at (0.5,3.5) {4};
+		\node at (1.5,3.5) {14};
+		\node at (2.5,3.5) {19};
+		\node at (3.5,3.5) {5};
+		\node at (4.5,3.5) {13};
+		
+		\node at (0.5,2.5) {1};
+		\node at (1.5,2.5) {22};
+		\node[fill=blue!10, draw=blue] at (2.5,2.5) {25};
+		\node at (3.5,2.5) {10};
+		\node at (4.5,2.5) {21};
+		
+		\node at (0.5,1.5) {18};
+		\node at (1.5,1.5) {6};
+		\node at (2.5,1.5) {3};
+		\node at (3.5,1.5) {15};
+		\node at (4.5,1.5) {7};
+		
+		\node at (0.5,0.5) {24};
+		\node at (1.5,0.5) {11};
+		\node at (2.5,0.5) {20};
+		\node at (3.5,0.5) {23};
+		\node at (4.5,0.5) {12};
+		
+		% Right half 
+		\node at (5.5,4.5) {42};
+		\node at (6.5,4.5) {34};
+		\node at (7.5,4.5) {27};
+		\node at (8.5,4.5) {41};
+		\node at (9.5,4.5) {33};
+		
+		\node at (5.5,3.5) {29};
+		\node at (6.5,3.5) {39};
+		\node at (7.5,3.5) {44};
+		\node at (8.5,3.5) {30};
+		\node at (9.5,3.5) {38};
+		
+		\node[fill=blue!10, draw=blue] at (5.5,2.5) {26};
+		\node at (6.5,2.5) {47};
+		\node at (7.5,2.5) {50};
+		\node at (8.5,2.5) {35};
+		\node at (9.5,2.5) {46};
+		
+		\node at (5.5,1.5) {43};
+		\node at (6.5,1.5) {31};
+		\node at (7.5,1.5) {28};
+		\node at (8.5,1.5) {40};
+		\node at (9.5,1.5) {32};
+		
+		\node at (5.5,0.5) {49};
+		\node at (6.5,0.5) {36};
+		\node at (7.5,0.5) {45};
+		\node at (8.5,0.5) {48};
+		\node at (9.5,0.5) {37};
+		
+	\end{tikzpicture}
+\caption{A $5 \times 10$ grid solved by tiling. The two halves have the same path connecting $v_{1,3}$ to $v_{3,3}$. In blue, the 'link' between two otherwise disjoint paths.}
+\label{fig:tiling_example}
+\end{figure}
+	
 \begin{proof}
     Consider the two Board Graphs $\mathfrak{G}_{n \times m}$ and $\mathfrak{G}_{k \times m}$.
     By Lemma \ref{lem:two_boards_horizontal}, both of them are solvable - since $9 \ge n, m, k \ge 5$.
@@ -547,77 +698,6 @@ This constraint guarantees the possibility to create a tilization of the board f
 
 The result exposed in the Lemma \ref{lem:tiling} is graphically represented in Figure \ref{fig:tiling_example}.
 It's to note that the above Lemma \ref{lem:tiling} can be easily adapted to increasing values of columns for Board Graphs.
-
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[scale=0.7, every node/.style={font=\small}]
-    \draw[step=1cm,gray,very thin] (0,0) grid (10,5);
-
-    \node at (0.5,4.5) {17};
-    \node at (1.5,4.5) {9};
-    \node at (2.5,4.5) {2};
-    \node at (3.5,4.5) {16};
-    \node at (4.5,4.5) {8};
-
-    \node at (0.5,3.5) {4};
-    \node at (1.5,3.5) {14};
-    \node at (2.5,3.5) {19};
-    \node at (3.5,3.5) {5};
-    \node at (4.5,3.5) {13};
-
-    \node at (0.5,2.5) {1};
-    \node at (1.5,2.5) {22};
-    \node[fill=blue!10, draw=blue] at (2.5,2.5) {25};
-    \node at (3.5,2.5) {10};
-    \node at (4.5,2.5) {21};
-
-    \node at (0.5,1.5) {18};
-    \node at (1.5,1.5) {6};
-    \node at (2.5,1.5) {3};
-    \node at (3.5,1.5) {15};
-    \node at (4.5,1.5) {7};
-
-    \node at (0.5,0.5) {24};
-    \node at (1.5,0.5) {11};
-    \node at (2.5,0.5) {20};
-    \node at (3.5,0.5) {23};
-    \node at (4.5,0.5) {12};
-
-    % Right half 
-    \node at (5.5,4.5) {42};
-    \node at (6.5,4.5) {34};
-    \node at (7.5,4.5) {27};
-    \node at (8.5,4.5) {41};
-    \node at (9.5,4.5) {33};
-
-    \node at (5.5,3.5) {29};
-    \node at (6.5,3.5) {39};
-    \node at (7.5,3.5) {44};
-    \node at (8.5,3.5) {30};
-    \node at (9.5,3.5) {38};
-
-    \node[fill=blue!10, draw=blue] at (5.5,2.5) {26};
-    \node at (6.5,2.5) {47};
-    \node at (7.5,2.5) {50};
-    \node at (8.5,2.5) {35};
-    \node at (9.5,2.5) {46};
-
-    \node at (5.5,1.5) {43};
-    \node at (6.5,1.5) {31};
-    \node at (7.5,1.5) {28};
-    \node at (8.5,1.5) {40};
-    \node at (9.5,1.5) {32};
-
-    \node at (5.5,0.5) {49};
-    \node at (6.5,0.5) {36};
-    \node at (7.5,0.5) {45};
-    \node at (8.5,0.5) {48};
-    \node at (9.5,0.5) {37};
-
-\end{tikzpicture}
-\caption{A $5 \times 10$ grid solved by tiling. The two halves have the same path connecting $v_{1,3}$ to $v_{3,3}$. In blue, the 'link' between two otherwise disjoint paths.}
-\label{fig:tiling_example}
-\end{figure}
 
 The following Lemmas, instead, focus on stacking Board Graphs vertically.
 
@@ -760,7 +840,9 @@ Once again, a proof of the Lemma would require an enumeration of all the possibl
     The same reasoning applies to $m$; hence, the original bound is proven.
 \end{proof}
 
+\newpage
 \section{Over the Creation of a Board Graph in Neo4J}		\label{appendix:neo4j}
+
 In order to provide a common ground for retrieving a solution in Neo4J \cite{neo4j} (see Section \ref{sec:implementation}), a variable-dependent query was designed to create a Board Graph of desired size. The structure of the graph is organized in the following way:
 \begin{itemize}
 	\item Each node is created with the label \texttt{Node}, and has - as properties - \textit{row} and \textit{col}, respectively the indeces of row and of column in the original board-like structure.
