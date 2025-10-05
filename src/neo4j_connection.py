@@ -95,6 +95,24 @@ class Neo4JConnection:
         else:
             self.run_query(create_query)
 
+    def get_property(self, attributes: Dict, property: str):
+        """
+            Get a property from a node with given attributes.
+
+            :param attributes: A dictionary of attributes to match the node.
+            :param property: The property to retrieve.
+            :return: The value of the property, or None if not found.
+        """
+        attr_str = ", ".join([f"{key}: {value}" for key, value in attributes.items()])
+        query = f"""MATCH (n:Node {{{attr_str}}})
+                    RETURN n.{property} AS {property}
+                    LIMIT 1
+                """
+        result = self.run_query(query)
+        if result and property in result[0]:
+            return result[0][property]
+        return None
+
     def run_query(self, query, parameters=None):
         """
             Run a Cypher query against the Neo4j database.
@@ -375,3 +393,9 @@ class Neo4JConnectionDiplomatico(Neo4JConnection):
         result = self.run_query(query)
 
         return result[0] if result else {}
+    
+    def get_property_indices(self, row: int, col: int, property: str):
+        return self.get_property({
+            "row": row,
+            "col": col
+        }, property=property)
