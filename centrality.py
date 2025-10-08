@@ -26,18 +26,16 @@ def _heatmap(data: Dict[Tuple[int, int], float], title: str = "Heatmap") -> None
     cols = max(k[1] for k in data.keys()) + 1
 
     grid = np.full((rows, cols), fill_value=0, dtype=float)
-    max_v = max([v for v in data.values()])
     for (i, j), v in data.items():
         if 0 <= i < rows and 0 <= j < cols:
-            grid[i, j] = v/max_v
+            grid[i, j] = v
 
     fig, ax = plt.subplots(figsize=(max(4, cols), max(4, rows)))
 
-    sns.heatmap(grid, annot=True, fmt='.2f', cmap='viridis', cbar=True, ax=ax,
+    sns.heatmap(grid, annot=True, fmt='.1f', cmap='viridis', cbar=True, ax=ax,
                 linewidths=0.6, linecolor='gray')
     
     im = ax.imshow(grid, cmap='viridis', origin='upper')
-    cbar = fig.colorbar(im, ax=ax)
 
     ax.set_xlabel('Column')
     ax.set_ylabel('Row')
