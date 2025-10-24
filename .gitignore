@@ -8,3 +8,7 @@ src/config.py
 *.log
 *.out
 *.gz
+doc/slides.nav
+doc/slides.snm
+doc/slides.toc
+doc/slides.vrb

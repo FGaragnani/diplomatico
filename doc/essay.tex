@@ -201,6 +201,7 @@ Of course, the node $v_{ij}$ will represent the square located at row $i$ and co
 The condition required for the edge set $E$ ensures that only legal moves are present as undirected arcs in a Board Graph. The edges are undirected because, of course, the movement rules are perfectly simmetrical (i.e., being able to move from cell $A$ to cell $B$ means that it's also possible to move from cell $B$ to cell $A$).
 
 \begin{definition}{Winning Path}{} \label{def:winning_path}
+	
 Given a Board Graph $\mathfrak{G}_{n \times m} = (V, E)$, a \textbf{Winning Path} is an Hamiltonian Path in $\mathfrak{G}_{n \times m}$.
 Specifically, an Hamiltonian Path is a sequence of vertices $\mathfrak{h} = (v^1,\,v^2,\,\dots,\,v^{n \times m})$ such that:
 $$
@@ -549,32 +550,33 @@ The usage of centrality measures, as it will be seen, can be exploited to see ho
 \begin{table}[ht]
 	\centering
 	\setlength{\tabcolsep}{3.9pt}
+	\renewcommand{\arraystretch}{1.2}
 	\begin{tabular}{|llcccc|}
-		\toprule
+		\hline
 		\multirow{2}{*}{Board} & \multirow{2}{*}{Metric} & \multicolumn{4}{c}{Centrality Measure} \\
 		\cmidrule(lr){3-6}
 		& & Betweenness & Closeness & Degree & Eigenvector \\
-		\midrule
+		\hline
 		\multirow{2}{*}{$4 \times 5$} 
 		& Correlation & \textbf{-0.8228}*** & -0.5899** & -0.7845*** & -0.1728 \\
 		& $p$-value   & 0.0000 & 0.0062 & 0.0000 & 0.4664 \\
-		\midrule
+		\hline
 		\multirow{2}{*}{$4 \times 6$} 
 		& Correlation & \textbf{-0.7744}*** & -0.6316*** & -0.7197*** & -0.5179** \\
 		& $p$-value   & 0.0000 & 0.0009 & 0.0001 & 0.0095 \\
-		\midrule
+		\hline
 		\multirow{2}{*}{$5 \times 5$} 
 		& Correlation & \textbf{-0.6820}*** & -0.2543 & -0.4037* & -0.1460 \\
 		& $p$-value   & 0.0002 & 0.2199 & 0.0454 & 0.4861 \\
-		\midrule
+		\hline
 		\multirow{2}{*}{$4 \times 7$} 
 		& Correlation & \textbf{-0.9098}*** & -0.8204*** & -0.8596*** & -0.5842** \\
 		& $p$-value   & 0.0000 & 0.0000 & 0.0000 & 0.0011 \\
-		\midrule
+		\hline
 		\multirow{2}{*}{$5 \times 6$} 
 		& Correlation & -0.7353* & -0.4310 & \textbf{-0.7729}* & -0.5072 \\
 		& $p$-value   & 0.0240 & 0.2468 & 0.0146 & 0.1634 \\
-		\bottomrule
+		\hline
 	\end{tabular}
 	\caption{Correlation coefficients ($r$) and $p$-values between Hamiltonian paths and centrality measures across different board sizes.}
 	\label{tab:correlations}
