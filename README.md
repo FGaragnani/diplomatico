@@ -23,7 +23,6 @@ A solver for the *Diplomatico* puzzle, using Neo4J and Python.
    NEO4J_USER = "neo4j"
    NEO4J_PASSWORD = "password"  # Change to your actual password
    ```
-   You may copy `src/config.py` to `src/config.example.py` for sharing safe defaults.
 
 ---
 
