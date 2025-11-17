@@ -89,6 +89,7 @@ python main.py --r <rows> --c <cols> --query_type <RAW|CONSTRUCTIVE|APOC|PYTHON>
 - `--starting_node` *(optional)*: Starting node as `row,col`
 - `--ending_node` *(optional)*: Ending node as `row,col`
 - `--t` *(optional)*: Number of times to repeat and average timing
+- `--w` *(optional)*: If set, employs the Warndorff heuristic in pathfinding (only for `PYTHON` method)
 
 #### Example
 
