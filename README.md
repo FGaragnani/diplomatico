@@ -57,8 +57,6 @@ To verify your installation, try:
 python main.py --r 5 --c 5 --query_type PYTHON --n 1
 ```
 
----
-
 ## main.py — Solution Finder CLI
 
 `main.py` is the main command-line interface for generating and analyzing solution spaces for the game Diplomatico using Neo4J and Python. It supports multiple query strategies, board sizes, and optional start/end node anchoring.
@@ -106,20 +104,50 @@ python main.py --r 7 --c 7 --query_type APOC --n 1 --starting_node 0,0 --ending_
 - Start/end node anchoring is supported for all query types.
 - Even for the `PYTHON` method, a Neo4J connection is required to build the board graph.
 
----
+## centrality.py — Node Centrality Analysis
+
+`centrality.py` computes and displays various centrality measures for nodes in the Diplomatico board graph stored in Neo4J.
+
+### Features
+
+- **Centrality Measures:** Calculates Degree, Closeness, Betweenness, and Eigenvector centralities for each node.
+
+- **Neo4J Integration:** Connects to the existing Neo4J database containing the board graph.
+
+### Usage
+
+Run from the command line:
+
+```powershell
+python centrality.py --r <rows> --c <cols>
+```
+
+#### Arguments
+
+- `--r`: Number of rows (default: 5)
+- `--c`: Number of columns (default: 5)
+- `--node` *(optional)*: Specific node as `row,col` to display centrality measures for.
+- `--all` *(optional)*: If set, displays centrality measures for all nodes.
+- `--heat` *(optional)*: If set, generates heatmaps for each centrality measure.
+
+#### Example
+
+```powershell
+python centrality.py --r 5 --c 5 --all --heat
+```
+
+### Notes
+
+- Ensure the Neo4J database is running and contains the board graph before executing.
+- Centrality calculations may take time for larger boards.
 
 ## Contributing
 
 Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request. For major changes, please discuss them in an issue first.
 
----
-
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
-
----
-
 
 ## Essay
 
